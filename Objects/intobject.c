@@ -13,6 +13,7 @@ PyInt_GetMax(void)
     return LONG_MAX;            /* To initialize sys.maxint */
 }
 
+
 /* Integers are quite normal objects, to make object handling uniform.
    (Using odd pointers to represent integers would save much space
    but require extra checks for this special case throughout the code.)
@@ -64,12 +65,15 @@ fill_free_list(void)
     return p + N_INTOBJECTS - 1;
 }
 
+#ifndef SYMBEX_OPTIMIZATIONS
 #ifndef NSMALLPOSINTS
 #define NSMALLPOSINTS           257
 #endif
 #ifndef NSMALLNEGINTS
 #define NSMALLNEGINTS           5
 #endif
+#endif /* ifndef SYMBEX_OPTIMIZATIONS */
+
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
 /* References to small integers are saved in this array so that they
    can be shared.
@@ -82,6 +86,7 @@ static PyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
 Py_ssize_t quick_int_allocs;
 Py_ssize_t quick_neg_int_allocs;
 #endif
+
 
 PyObject *
 PyInt_FromLong(long ival)
