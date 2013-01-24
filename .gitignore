@@ -1,0 +1,30 @@
+# Binary files
+*.o
+*.pyc
+
+# Eclipse files
+.cproject
+.project
+.pydevproject
+
+# Emacs files
+*~
+
+# Generated files
+/Makefile
+/Makefile.pre
+/Misc/python.pc
+/Modules/Setup
+/Modules/Setup.config
+/Modules/Setup.local
+/Modules/config.c
+/Modules/ld_so_aix
+/Parser/pgen
+/Parser/pgen.stamp
+/build
+/config.log
+/config.status
+/libpython2.7.a
+/pyconfig.h
+/python
+/python-gdb.py
