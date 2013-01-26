@@ -1410,11 +1410,17 @@ p[2*S+n+S: 2*S+n+2*S]
 void *
 _PyMem_DebugMalloc(size_t nbytes)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugMallocApi(_PYMALLOC_MEM_ID, nbytes);
 }
 void *
 _PyMem_DebugRealloc(void *p, size_t nbytes)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugReallocApi(_PYMALLOC_MEM_ID, p, nbytes);
 }
 void
@@ -1427,11 +1433,17 @@ _PyMem_DebugFree(void *p)
 void *
 _PyObject_DebugMalloc(size_t nbytes)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugMallocApi(_PYMALLOC_OBJ_ID, nbytes);
 }
 void *
 _PyObject_DebugRealloc(void *p, size_t nbytes)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugReallocApi(_PYMALLOC_OBJ_ID, p, nbytes);
 }
 void
@@ -1453,6 +1465,10 @@ _PyObject_DebugMallocApi(char id, size_t nbytes)
     uchar *p;           /* base address of malloc'ed block */
     uchar *tail;        /* p + 2*SST + nbytes == pointer to tail pad bytes */
     size_t total;       /* nbytes + 4*SST */
+
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
 
     bumpserialno();
     total = nbytes + 4*SST;
@@ -1509,6 +1525,10 @@ _PyObject_DebugReallocApi(char api, void *p, size_t nbytes)
     size_t total;       /* nbytes + 4*SST */
     size_t original_nbytes;
     int i;
+
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
 
     if (p == NULL)
         return _PyObject_DebugMallocApi(api, nbytes);
