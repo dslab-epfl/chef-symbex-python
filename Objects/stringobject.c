@@ -100,6 +100,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         Py_MEMCPY(op->ob_sval, str, size);
     op->ob_sval[size] = '\0';
     /* share short strings */
+#ifndef SYMBEX_OPTIMIZATIONS
     if (size == 0) {
         PyObject *t = (PyObject *)op;
         PyString_InternInPlace(&t);
@@ -107,7 +108,6 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         nullstring = op;
         Py_INCREF(op);
     }
-#ifndef SYMBEX_OPTIMIZATIONS
     else if (size == 1 && str != NULL) {
         PyObject *t = (PyObject *)op;
         PyString_InternInPlace(&t);
@@ -157,6 +157,7 @@ PyString_FromString(const char *str)
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
     Py_MEMCPY(op->ob_sval, str, size+1);
+#ifndef SYMBEX_OPTIMIZATIONS
     /* share short strings */
     if (size == 0) {
         PyObject *t = (PyObject *)op;
@@ -165,7 +166,6 @@ PyString_FromString(const char *str)
         nullstring = op;
         Py_INCREF(op);
     }
-#ifndef SYMBEX_OPTIMIZATIONS
     else if (size == 1) {
         PyObject *t = (PyObject *)op;
         PyString_InternInPlace(&t);
@@ -1178,7 +1178,9 @@ static PyObject *
 string_item(PyStringObject *a, register Py_ssize_t i)
 {
     char pchar;
+#ifndef SYMBEX_OPTIMIZATIONS
     PyObject *v;
+#endif
     if (i < 0 || i >= Py_SIZE(a)) {
         PyErr_SetString(PyExc_IndexError, "string index out of range");
         return NULL;
