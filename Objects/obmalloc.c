@@ -17,6 +17,10 @@
 static int running_on_valgrind = -1;
 #endif
 
+#ifdef SYMBEX_OPTIMIZATIONS
+#include "s2e.h"
+#endif
+
 /* An object allocator for Python.
 
    Here is an introduction to the layers of the Python memory architecture,
@@ -751,6 +755,10 @@ PyObject_Malloc(size_t nbytes)
     poolp next;
     uint size;
 
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
+
 #ifdef WITH_VALGRIND
     if (UNLIKELY(running_on_valgrind == -1))
         running_on_valgrind = RUNNING_ON_VALGRIND;
@@ -1182,6 +1190,10 @@ PyObject_Realloc(void *p, size_t nbytes)
     uint arenaindex_temp;
 #endif
 
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
+
     if (p == NULL)
         return PyObject_Malloc(nbytes);
 
@@ -1261,12 +1273,18 @@ PyObject_Realloc(void *p, size_t nbytes)
 void *
 PyObject_Malloc(size_t n)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&n, sizeof(n));
+#endif
     return PyMem_MALLOC(n);
 }
 
 void *
 PyObject_Realloc(void *p, size_t n)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&n, sizeof(n));
+#endif
     return PyMem_REALLOC(p, n);
 }
 

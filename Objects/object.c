@@ -4,6 +4,10 @@
 #include "Python.h"
 #include "frameobject.h"
 
+#ifdef SYMBEX_OPTIMIZATIONS
+#include "s2e.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -2321,12 +2325,18 @@ Py_ssize_t (*_Py_abstract_hack)(PyObject *) = PyObject_Size;
 void *
 PyMem_Malloc(size_t nbytes)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return PyMem_MALLOC(nbytes);
 }
 
 void *
 PyMem_Realloc(void *p, size_t nbytes)
 {
+#ifdef SYMBEX_OPTIMIZATIONS
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return PyMem_REALLOC(p, nbytes);
 }
 
