@@ -65,6 +65,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
             "Negative size passed to PyString_FromStringAndSize");
         return NULL;
     }
+#ifndef SYMBEX_OPTIMIZATIONS
     if (size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -72,7 +73,6 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         Py_INCREF(op);
         return (PyObject *)op;
     }
-#ifndef SYMBEX_OPTIMIZATIONS
     if (size == 1 && str != NULL &&
         (op = characters[*str & UCHAR_MAX]) != NULL)
     {
@@ -132,6 +132,7 @@ PyString_FromString(const char *str)
             "string is too long for a Python string");
         return NULL;
     }
+#ifndef SYMBEX_OPTIMIZATIONS
     if (size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -139,7 +140,6 @@ PyString_FromString(const char *str)
         Py_INCREF(op);
         return (PyObject *)op;
     }
-#ifndef SYMBEX_OPTIMIZATIONS
     if (size == 1 && (op = characters[*str & UCHAR_MAX]) != NULL) {
 #ifdef COUNT_ALLOCS
         one_strings++;
