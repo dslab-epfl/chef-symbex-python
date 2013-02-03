@@ -6525,6 +6525,22 @@ unicode_getitem(PyUnicodeObject *self, Py_ssize_t index)
     return (PyObject*) PyUnicode_FromUnicode(&self->str[index], 1);
 }
 
+#ifdef SYMBEX_OPTIMIZATIONS
+
+static long
+unicode_hash(PyUnicodeObject *self)
+{
+#ifdef Py_DEBUG
+    assert(_Py_HashSecret_Initialized);
+#endif
+    if (self->hash != -1)
+    	return self->hash;
+    self->hash = PyUnicode_GET_SIZE(self);
+    return self->hash;
+}
+
+#else
+
 static long
 unicode_hash(PyUnicodeObject *self)
 {
@@ -6564,6 +6580,8 @@ unicode_hash(PyUnicodeObject *self)
     self->hash = x;
     return x;
 }
+
+#endif /* SYMBEX_OPTIMIZATIONS */
 
 PyDoc_STRVAR(index__doc__,
              "S.index(sub [,start [,end]]) -> int\n\
