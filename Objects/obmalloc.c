@@ -17,6 +17,8 @@
 static int running_on_valgrind = -1;
 #endif
 
+#include "symbex.h"
+
 #ifdef SYMBEX_OPTIMIZATIONS
 #include "s2e.h"
 #endif

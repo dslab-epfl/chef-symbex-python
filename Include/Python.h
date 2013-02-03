@@ -16,11 +16,6 @@
 #define WITH_CYCLE_GC 1
 #endif
 
-/* SYMBEX OPTIMIZATIONS */
-#ifndef SYMBEX_OPTIMIZATIONS
-#define SYMBEX_OPTIMIZATIONS 1
-#endif
-
 #include <limits.h>
 
 #ifndef UCHAR_MAX

@@ -2,6 +2,8 @@
 /* Integer object implementation */
 
 #include "Python.h"
+#include "symbex.h"
+
 #include <ctype.h>
 #include <float.h>
 
@@ -65,7 +67,7 @@ fill_free_list(void)
     return p + N_INTOBJECTS - 1;
 }
 
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
 #ifndef NSMALLPOSINTS
 #define NSMALLPOSINTS           257
 #endif

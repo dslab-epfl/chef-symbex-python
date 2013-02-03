@@ -3,6 +3,7 @@
 
 #include "Python.h"
 #include "frameobject.h"
+#include "symbex.h"
 
 #ifdef SYMBEX_OPTIMIZATIONS
 #include "s2e.h"

@@ -41,6 +41,7 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
+#include "symbex.h"
 
 #include "unicodeobject.h"
 #include "ucnhash.h"
@@ -6525,7 +6526,7 @@ unicode_getitem(PyUnicodeObject *self, Py_ssize_t index)
     return (PyObject*) PyUnicode_FromUnicode(&self->str[index], 1);
 }
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#if defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_HASHES)
 
 static long
 unicode_hash(PyUnicodeObject *self)

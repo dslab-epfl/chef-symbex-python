@@ -3,6 +3,8 @@
 #define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
+#include "symbex.h"
+
 #include <ctype.h>
 #include <stddef.h>
 
@@ -10,7 +12,7 @@
 Py_ssize_t null_strings, one_strings;
 #endif
 
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
 static PyStringObject *characters[UCHAR_MAX + 1];
 #endif
 
@@ -66,7 +68,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
             "Negative size passed to PyString_FromStringAndSize");
         return NULL;
     }
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     if (size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -101,7 +103,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         Py_MEMCPY(op->ob_sval, str, size);
     op->ob_sval[size] = '\0';
     /* share short strings */
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     if (size == 0) {
         PyObject *t = (PyObject *)op;
         PyString_InternInPlace(&t);
@@ -133,7 +135,7 @@ PyString_FromString(const char *str)
             "string is too long for a Python string");
         return NULL;
     }
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     if (size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -158,7 +160,7 @@ PyString_FromString(const char *str)
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
     Py_MEMCPY(op->ob_sval, str, size+1);
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     /* share short strings */
     if (size == 0) {
         PyObject *t = (PyObject *)op;
@@ -1179,7 +1181,7 @@ static PyObject *
 string_item(PyStringObject *a, register Py_ssize_t i)
 {
     char pchar;
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     PyObject *v;
 #endif
     if (i < 0 || i >= Py_SIZE(a)) {
@@ -1187,7 +1189,7 @@ string_item(PyStringObject *a, register Py_ssize_t i)
         return NULL;
     }
     pchar = a->ob_sval[i];
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     v = (PyObject *)characters[pchar & UCHAR_MAX];
     if (v == NULL)
         v = PyString_FromStringAndSize(&pchar, 1);
@@ -1275,7 +1277,7 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
       && memcmp(a->ob_sval, b->ob_sval, Py_SIZE(a)) == 0;
 }
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#if defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_HASHES)
 
 static long
 string_hash(PyStringObject *a)
@@ -4816,7 +4818,7 @@ PyString_InternFromString(const char *cp)
 void
 PyString_Fini(void)
 {
-#ifndef SYMBEX_OPTIMIZATIONS
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     int i;
     for (i = 0; i < UCHAR_MAX + 1; i++) {
         Py_XDECREF(characters[i]);
