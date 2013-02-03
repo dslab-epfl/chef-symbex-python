@@ -5,5 +5,5 @@
 
 #ifdef SYMBEX_OPTIMIZATIONS
 #define SYMBEX_HASHES        1
-// #define SYMBEX_INTERNED      1
+#define SYMBEX_INTERNED      1
 #endif
