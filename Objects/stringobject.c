@@ -14,6 +14,7 @@ Py_ssize_t null_strings, one_strings;
 static PyStringObject *characters[UCHAR_MAX + 1];
 #endif
 
+
 static PyStringObject *nullstring;
 
 /* This dictionary holds all interned strings.  Note that references to
@@ -82,7 +83,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         Py_INCREF(op);
         return (PyObject *)op;
     }
-#endif
+#endif /* ifndef SYMBEX_OPTIMIZATIONS */
 
     if (size > PY_SSIZE_T_MAX - PyStringObject_SIZE) {
         PyErr_SetString(PyExc_OverflowError, "string is too large");
@@ -115,7 +116,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         characters[*str & UCHAR_MAX] = op;
         Py_INCREF(op);
     }
-#endif
+#endif /* ifndef SYMBEX_OPTIMIZATIONS */
     return (PyObject *) op;
 }
 
@@ -147,7 +148,7 @@ PyString_FromString(const char *str)
         Py_INCREF(op);
         return (PyObject *)op;
     }
-#endif
+#endif /* ifndef SYMBEX_OPTIMIZATIONS */
 
     /* Inline PyObject_NewVar */
     op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
@@ -173,7 +174,7 @@ PyString_FromString(const char *str)
         characters[*str & UCHAR_MAX] = op;
         Py_INCREF(op);
     }
-#endif
+#endif /* ifndef SYMBEX_OPTIMIZATIONS */
     return (PyObject *) op;
 }
 
@@ -1276,7 +1277,8 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
 
 #ifdef SYMBEX_OPTIMIZATIONS
 
-static long string_hash(PyStringObject *a)
+static long
+string_hash(PyStringObject *a)
 {
 #ifdef Py_DEBUG
   assert(_Py_HashSecret_Initialized);
@@ -1323,7 +1325,7 @@ string_hash(PyStringObject *a)
     return x;
 }
 
-#endif
+#endif /* SYMBEX_OPTIMIZATIONS */
 
 static PyObject*
 string_subscript(PyStringObject* self, PyObject* item)
