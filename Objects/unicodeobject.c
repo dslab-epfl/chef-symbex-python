@@ -43,6 +43,10 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "Python.h"
 #include "symbex.h"
 
+#ifdef SYMBEX_OPTIMIZATIONS
+#include "s2e.h"
+#endif
+
 #include "unicodeobject.h"
 #include "ucnhash.h"
 
@@ -314,12 +318,18 @@ static
 PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 {
     register PyUnicodeObject *unicode;
+#ifdef SYMBEX_OPTIMIZATIONS
+    Py_ssize_t sym_length = length;
+    s2e_get_example(&length, sizeof(length));
+#endif
 
+#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
     /* Optimization for empty strings */
     if (length == 0 && unicode_empty != NULL) {
         Py_INCREF(unicode_empty);
         return unicode_empty;
     }
+#endif
 
     /* Ensure we won't overflow the size. */
     if (length > ((PY_SSIZE_T_MAX / sizeof(Py_UNICODE)) - 1)) {
@@ -371,7 +381,11 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
      */
     unicode->str[0] = 0;
     unicode->str[length] = 0;
+#ifdef SYMBEX_OPTIMIZATIONS
+    unicode->length = sym_length;
+#else
     unicode->length = length;
+#endif
     unicode->hash = -1;
     unicode->defenc = NULL;
     return unicode;
