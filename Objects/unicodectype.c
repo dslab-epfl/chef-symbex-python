@@ -11,6 +11,8 @@
 #include "Python.h"
 #include "unicodeobject.h"
 
+#include "symbex.h"
+
 #define ALPHA_MASK 0x01
 #define DECIMAL_MASK 0x02
 #define DIGIT_MASK 0x04
