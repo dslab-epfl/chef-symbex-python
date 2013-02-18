@@ -10,6 +10,11 @@
 #define PY_LOCAL_AGGRESSIVE
 
 #include "Python.h"
+#include "symbex.h"
+
+#ifdef SYMBEX_OPTIMIZATIONS
+#include "s2e.h"
+#endif
 
 #include "code.h"
 #include "frameobject.h"
@@ -148,6 +153,15 @@ static PyObject * string_concatenate(PyObject *, PyObject *,
                                      PyFrameObject *, unsigned char *);
 static PyObject * kwd_as_string(PyObject *);
 static PyObject * special_lookup(PyObject *, char *, PyObject **);
+
+#ifdef SYMBEX_OPTIMIZATIONS
+typedef struct {
+	uint32_t frame_count;
+	uint32_t frames[1];
+} __attribute__((packed)) TraceUpdate;
+
+static int report_trace(PyFrameObject *frame);
+#endif
 
 #define NAME_ERROR_MSG \
     "name '%.200s' is not defined"
@@ -1061,6 +1075,9 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
                 goto on_error;
             }
         }
+#ifdef SYMBEX_OPTIMIZATIONS
+        report_trace(f);
+#endif
 
         /* Extract opcode and argument */
 
@@ -3300,6 +3317,47 @@ kwd_as_string(PyObject *kwd) {
     return _PyUnicode_AsDefaultEncodedString(kwd, "replace");
 #endif
 }
+
+#ifdef SYMBEX_OPTIMIZATIONS
+static int report_trace(PyFrameObject *frame) {
+	if (!s2e_version()) {
+		return 0;
+	}
+
+	int stack_counter = 0;
+	PyFrameObject *current = frame;
+	while (current != NULL) {
+		stack_counter += 1;
+		current = current->f_back;
+	}
+	size_t update_size = sizeof(TraceUpdate) + stack_counter*sizeof(uint32_t);
+
+	TraceUpdate *update = (TraceUpdate*)PyMem_Malloc(update_size);
+	if (update == NULL) {
+		return -1;
+	}
+
+	update->frame_count = stack_counter + 1;
+	update->frames[0] = (uint32_t)frame->f_lasti;
+
+	current = frame;
+	stack_counter = 0;
+	while (current != NULL) {
+		update->frames[stack_counter + 1] = (uintptr_t)current;
+		current = current->f_back;
+		stack_counter += 1;
+	}
+
+	if (s2e_invoke_plugin("InterpreterMonitor", (void*)update,
+			update_size) != 0) {
+		PyMem_Free(update);
+		return -1;
+	}
+
+	PyMem_Free(update);
+	return 0;
+}
+#endif
 
 
 /* Implementation notes for set_exc_info() and reset_exc_info():
