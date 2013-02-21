@@ -3348,7 +3348,7 @@ static int report_trace(PyFrameObject *frame, int inst_only) {
 		trace_update.frame_count = frame_counter;
 	}
 
-	if (s2e_invoke_plugin("InterpreterMonitor", (void*)trace_update,
+	if (s2e_invoke_plugin("InterpreterMonitor", (void*)&trace_update,
 			sizeof(TraceUpdate) + (trace_update.frame_count - 1)*sizeof(uint32_t)) != 0) {
 		return -1;
 	}
