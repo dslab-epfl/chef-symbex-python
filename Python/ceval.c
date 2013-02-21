@@ -12,7 +12,7 @@
 #include "Python.h"
 #include "symbex.h"
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENT
 #include "s2e.h"
 #endif
 
@@ -154,7 +154,7 @@ static PyObject * string_concatenate(PyObject *, PyObject *,
 static PyObject * kwd_as_string(PyObject *);
 static PyObject * special_lookup(PyObject *, char *, PyObject **);
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_INSTRUMENT
 typedef struct {
 	uint32_t frame_count;
 	uint32_t frames[1];
@@ -1075,7 +1075,7 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
                 goto on_error;
             }
         }
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_INSTRUMENT
         report_trace(f);
 #endif
 
@@ -3318,7 +3318,7 @@ kwd_as_string(PyObject *kwd) {
 #endif
 }
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_INSTRUMENT
 static int report_trace(PyFrameObject *frame) {
 	if (!s2e_version()) {
 		return 0;

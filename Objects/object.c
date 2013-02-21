@@ -5,7 +5,7 @@
 #include "frameobject.h"
 #include "symbex.h"
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
 #include "s2e.h"
 #endif
 
@@ -2326,7 +2326,7 @@ Py_ssize_t (*_Py_abstract_hack)(PyObject *) = PyObject_Size;
 void *
 PyMem_Malloc(size_t nbytes)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
     return PyMem_MALLOC(nbytes);
@@ -2335,7 +2335,7 @@ PyMem_Malloc(size_t nbytes)
 void *
 PyMem_Realloc(void *p, size_t nbytes)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
     return PyMem_REALLOC(p, nbytes);

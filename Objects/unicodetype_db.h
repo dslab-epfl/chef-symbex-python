@@ -3276,7 +3276,7 @@ int _PyUnicode_IsWhitespace(register const Py_UNICODE ch)
 #ifdef WANT_WCTYPE_FUNCTIONS
     return iswspace(ch);
 #else
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_SHORT_CIRCUITED
     /* Purposedly not using short-circuited operators to avoid branching */
     return (ch == 0x0009) |
     	   (ch == 0x000A) |
@@ -3343,7 +3343,7 @@ int _PyUnicode_IsWhitespace(register const Py_UNICODE ch)
         return 1;
     }
     return 0;
-#endif
+#endif /* SYMBEX_OPTIMIZATIONS */
 #endif
 }
 
@@ -3353,7 +3353,7 @@ int _PyUnicode_IsWhitespace(register const Py_UNICODE ch)
  */
 int _PyUnicode_IsLinebreak(register const Py_UNICODE ch)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_SHORT_CIRCUITED
 	/* Purposedly not using short-circuited operators to avoid branching */
 	return (ch == 0x000A) |
 		   (ch == 0x000B) |
@@ -3381,6 +3381,6 @@ int _PyUnicode_IsLinebreak(register const Py_UNICODE ch)
         return 1;
     }
     return 0;
-#endif
+#endif /* SYMBEX_OPTIMIZATIONS */
 }
 

@@ -19,7 +19,7 @@ static int running_on_valgrind = -1;
 
 #include "symbex.h"
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
 #include "s2e.h"
 #endif
 
@@ -757,7 +757,7 @@ PyObject_Malloc(size_t nbytes)
     poolp next;
     uint size;
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
 
@@ -1192,7 +1192,7 @@ PyObject_Realloc(void *p, size_t nbytes)
     uint arenaindex_temp;
 #endif
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
 

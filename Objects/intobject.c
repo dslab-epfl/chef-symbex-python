@@ -67,14 +67,14 @@ fill_free_list(void)
     return p + N_INTOBJECTS - 1;
 }
 
-#if !(defined(SYMBEX_OPTIMIZATIONS) && defined(SYMBEX_INTERNED))
+#ifndef SYMBEX_INTERNED
 #ifndef NSMALLPOSINTS
 #define NSMALLPOSINTS           257
 #endif
 #ifndef NSMALLNEGINTS
 #define NSMALLNEGINTS           5
 #endif
-#endif /* ifndef SYMBEX_OPTIMIZATIONS */
+#endif /* ifndef SYMBEX_INTERNED */
 
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
 /* References to small integers are saved in this array so that they
