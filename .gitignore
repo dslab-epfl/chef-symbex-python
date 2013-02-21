@@ -28,3 +28,5 @@
 /pyconfig.h
 /python
 /python-gdb.py
+
+/autom4te.cache/
