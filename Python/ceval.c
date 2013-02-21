@@ -12,7 +12,7 @@
 #include "Python.h"
 #include "symbex.h"
 
-#ifdef SYMBEX_INSTRUMENT
+#ifdef _SYMBEX_INSTRUMENT
 #include "s2e.h"
 #endif
 
