@@ -155,12 +155,17 @@ static PyObject * kwd_as_string(PyObject *);
 static PyObject * special_lookup(PyObject *, char *, PyObject **);
 
 #ifdef _SYMBEX_INSTRUMENT
+
+#define _SYMBEX_TRACE_SIZE	256
+
 typedef struct {
 	uint32_t frame_count;
-	uint32_t frames[1];
+	uint32_t frames[_SYMBEX_TRACE_SIZE];
 } __attribute__((packed)) TraceUpdate;
 
-static int report_trace(PyFrameObject *frame);
+static TraceUpdate trace_update;
+static int s2e_running = 0;
+static int report_trace(PyFrameObject *frame, int inst_only);
 #endif
 
 #define NAME_ERROR_MSG \
@@ -923,6 +928,9 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
             }
         }
     }
+#ifdef _SYMBEX_INSTRUMENT
+	report_trace(f, 0);
+#endif
 
     co = f->f_code;
     names = co->co_names;
@@ -1076,7 +1084,7 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
             }
         }
 #ifdef _SYMBEX_INSTRUMENT
-        report_trace(f);
+        report_trace(f, 1);
 #endif
 
         /* Extract opcode and argument */
@@ -3319,42 +3327,32 @@ kwd_as_string(PyObject *kwd) {
 }
 
 #ifdef _SYMBEX_INSTRUMENT
-static int report_trace(PyFrameObject *frame) {
-	if (!s2e_version()) {
+static int report_trace(PyFrameObject *frame, int inst_only) {
+	if (!inst_only)
+		s2e_running = s2e_version();
+
+	if (!s2e_running) {
 		return 0;
 	}
 
-	int stack_counter = 0;
-	PyFrameObject *current = frame;
-	while (current != NULL) {
-		stack_counter += 1;
-		current = current->f_back;
-	}
-	size_t update_size = sizeof(TraceUpdate) + stack_counter*sizeof(uint32_t);
+	trace_update.frames[0] = (uint32_t)frame->f_lasti;
+	if (!inst_only) {
+		PyFrameObject *current = frame;
+		uint32_t frame_counter = 1;
 
-	TraceUpdate *update = (TraceUpdate*)PyMem_Malloc(update_size);
-	if (update == NULL) {
+		while (frame_counter < _SYMBEX_TRACE_SIZE && current != NULL) {
+			trace_update.frames[frame_counter] = (uintptr_t)current;
+			frame_counter++;
+			current = current->f_back;
+		}
+		trace_update.frame_count = frame_counter;
+	}
+
+	if (s2e_invoke_plugin("InterpreterMonitor", (void*)trace_update,
+			sizeof(TraceUpdate) + (trace_update.frame_count - 1)*sizeof(uint32_t)) != 0) {
 		return -1;
 	}
 
-	update->frame_count = stack_counter + 1;
-	update->frames[0] = (uint32_t)frame->f_lasti;
-
-	current = frame;
-	stack_counter = 0;
-	while (current != NULL) {
-		update->frames[stack_counter + 1] = (uintptr_t)current;
-		current = current->f_back;
-		stack_counter += 1;
-	}
-
-	if (s2e_invoke_plugin("InterpreterMonitor", (void*)update,
-			update_size) != 0) {
-		PyMem_Free(update);
-		return -1;
-	}
-
-	PyMem_Free(update);
 	return 0;
 }
 #endif
