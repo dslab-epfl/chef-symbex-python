@@ -758,7 +758,7 @@ PyObject_Malloc(size_t nbytes)
     uint size;
 
 #ifdef _SYMBEX_ALLOC
-    s2e_get_example(&nbytes, sizeof(nbytes));
+    PREPARE_ALLOC(nbytes);
 #endif
 
 #ifdef WITH_VALGRIND
@@ -1193,7 +1193,7 @@ PyObject_Realloc(void *p, size_t nbytes)
 #endif
 
 #ifdef _SYMBEX_ALLOC
-    s2e_get_example(&nbytes, sizeof(nbytes));
+    PREPARE_ALLOC(nbytes);
 #endif
 
     if (p == NULL)

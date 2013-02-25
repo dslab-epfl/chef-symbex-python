@@ -2327,7 +2327,7 @@ void *
 PyMem_Malloc(size_t nbytes)
 {
 #ifdef _SYMBEX_ALLOC
-    s2e_get_example(&nbytes, sizeof(nbytes));
+    PREPARE_ALLOC(nbytes);
 #endif
     return PyMem_MALLOC(nbytes);
 }
@@ -2336,7 +2336,7 @@ void *
 PyMem_Realloc(void *p, size_t nbytes)
 {
 #ifdef _SYMBEX_ALLOC
-    s2e_get_example(&nbytes, sizeof(nbytes));
+	PREPARE_ALLOC(nbytes);
 #endif
     return PyMem_REALLOC(p, nbytes);
 }
