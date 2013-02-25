@@ -267,6 +267,38 @@ static inline unsigned s2e_get_example_uint(unsigned val)
     return buf;
 }
 
+/** Get maximum value for unsigned expression. */
+static inline unsigned s2e_get_upper_bound(unsigned val)
+{
+    unsigned buf = val;
+    __asm__ __volatile__(
+        "pushl %%ebx\n"
+        "movl %%edx, %%ebx\n"
+        ".byte 0x0f, 0x3f\n"
+        ".byte 0x00, 0x22, 0x00, 0x00\n"
+        ".byte 0x00, 0x00, 0x00, 0x00\n"
+        "popl %%ebx\n"
+        : : "a" (&buf), "d" (sizeof(buf)) : "memory"
+    );
+    return buf;
+}
+
+/** Get minimum value for expression. */
+static inline unsigned s2e_get_lower_bound(unsigned val)
+{
+    unsigned buf = val;
+    __asm__ __volatile__(
+        "pushl %%ebx\n"
+        "movl %%edx, %%ebx\n"
+        ".byte 0x0f, 0x3f\n"
+        ".byte 0x00, 0x23, 0x00, 0x00\n"
+        ".byte 0x00, 0x00, 0x00, 0x00\n"
+        "popl %%ebx\n"
+        : : "a" (&buf), "d" (sizeof(buf)) : "memory"
+    );
+    return buf;
+}
+
 /** Terminate current state. */
 static inline void s2e_kill_state(int status, const char *message)
 {
