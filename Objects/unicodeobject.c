@@ -321,6 +321,7 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 #ifdef _SYMBEX_VARSIZE
     Py_ssize_t sym_length = length;
     s2e_get_example(&length, sizeof(length));
+    s2e_assume(sym_length <= length);
 #endif
 
 #ifndef _SYMBEX_INTERNED

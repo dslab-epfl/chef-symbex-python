@@ -70,6 +70,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 #ifdef _SYMBEX_VARSIZE
     Py_ssize_t sym_size = size;
     s2e_get_example(&size, sizeof(size));
+    s2e_assume(sym_size <= size);
 #endif
     if (size < 0) {
         PyErr_SetString(PyExc_SystemError,
@@ -148,6 +149,7 @@ PyString_FromString(const char *str)
 #ifdef _SYMBEX_VARSIZE
     Py_ssize_t sym_size = size;
     s2e_get_example(&size, sizeof(size));
+    s2e_assume(sym_size <= size);
 #endif
     if (size > PY_SSIZE_T_MAX - PyStringObject_SIZE) {
         PyErr_SetString(PyExc_OverflowError,
