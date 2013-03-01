@@ -207,7 +207,7 @@ static inline void s2e_assume(int expression)
 
 
 /** Returns true if ptr points to symbolic memory */
-static inline int s2e_is_symbolic(void *ptr, size_t size)
+static inline int s2e_is_symbolic(const void *ptr, size_t size)
 {
     int result;
     __s2e_touch_buffer((char*)ptr, 1);
