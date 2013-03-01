@@ -16,7 +16,7 @@
 Py_ssize_t null_strings, one_strings;
 #endif
 
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
 static PyStringObject *characters[UCHAR_MAX + 1];
 #endif
 
@@ -77,7 +77,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
             "Negative size passed to PyString_FromStringAndSize");
         return NULL;
     }
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     if (size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -115,7 +115,7 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
     op->ob_size = sym_size;
 #endif
     /* share short strings */
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     if (size == 0) {
         PyObject *t = (PyObject *)op;
         PyString_InternInPlace(&t);
@@ -156,7 +156,7 @@ PyString_FromString(const char *str)
             "string is too long for a Python string");
         return NULL;
     }
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     if (size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -184,7 +184,7 @@ PyString_FromString(const char *str)
 #ifdef _SYMBEX_VARSIZE
     op->ob_size = sym_size;
 #endif
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     /* share short strings */
     if (size == 0) {
         PyObject *t = (PyObject *)op;
@@ -1205,7 +1205,7 @@ static PyObject *
 string_item(PyStringObject *a, register Py_ssize_t i)
 {
     char pchar;
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     PyObject *v;
 #endif
     if (i < 0 || i >= Py_SIZE(a)) {
@@ -1213,7 +1213,7 @@ string_item(PyStringObject *a, register Py_ssize_t i)
         return NULL;
     }
     pchar = a->ob_sval[i];
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     v = (PyObject *)characters[pchar & UCHAR_MAX];
     if (v == NULL)
         v = PyString_FromStringAndSize(&pchar, 1);
@@ -4842,7 +4842,7 @@ PyString_InternFromString(const char *cp)
 void
 PyString_Fini(void)
 {
-#ifndef _SYMBEX_INTERNED
+#ifndef _SYMBEX_INTERNED_STRING
     int i;
     for (i = 0; i < UCHAR_MAX + 1; i++) {
         Py_XDECREF(characters[i]);
