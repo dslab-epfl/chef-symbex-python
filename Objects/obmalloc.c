@@ -1275,7 +1275,7 @@ PyObject_Realloc(void *p, size_t nbytes)
 void *
 PyObject_Malloc(size_t n)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&n, sizeof(n));
 #endif
     return PyMem_MALLOC(n);
@@ -1284,7 +1284,7 @@ PyObject_Malloc(size_t n)
 void *
 PyObject_Realloc(void *p, size_t n)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&n, sizeof(n));
 #endif
     return PyMem_REALLOC(p, n);
@@ -1412,7 +1412,7 @@ p[2*S+n+S: 2*S+n+2*S]
 void *
 _PyMem_DebugMalloc(size_t nbytes)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
     return _PyObject_DebugMallocApi(_PYMALLOC_MEM_ID, nbytes);
@@ -1420,7 +1420,7 @@ _PyMem_DebugMalloc(size_t nbytes)
 void *
 _PyMem_DebugRealloc(void *p, size_t nbytes)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
     return _PyObject_DebugReallocApi(_PYMALLOC_MEM_ID, p, nbytes);
@@ -1435,7 +1435,7 @@ _PyMem_DebugFree(void *p)
 void *
 _PyObject_DebugMalloc(size_t nbytes)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
     return _PyObject_DebugMallocApi(_PYMALLOC_OBJ_ID, nbytes);
@@ -1443,7 +1443,7 @@ _PyObject_DebugMalloc(size_t nbytes)
 void *
 _PyObject_DebugRealloc(void *p, size_t nbytes)
 {
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
     return _PyObject_DebugReallocApi(_PYMALLOC_OBJ_ID, p, nbytes);
@@ -1468,7 +1468,7 @@ _PyObject_DebugMallocApi(char id, size_t nbytes)
     uchar *tail;        /* p + 2*SST + nbytes == pointer to tail pad bytes */
     size_t total;       /* nbytes + 4*SST */
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
 
@@ -1528,7 +1528,7 @@ _PyObject_DebugReallocApi(char api, void *p, size_t nbytes)
     size_t original_nbytes;
     int i;
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef _SYMBEX_ALLOC
     s2e_get_example(&nbytes, sizeof(nbytes));
 #endif
 
