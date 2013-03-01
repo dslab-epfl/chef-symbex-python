@@ -28,10 +28,15 @@
 #endif
 
 #ifdef _SYMBEX_INTERNED_STRING
-#define IS_SYMBOLIC(str, size) \
+#define IS_SYMBOLIC_STR_SIZE(str, size) \
 	(s2e_is_symbolic(&(str), sizeof(str)) || \
      s2e_is_symbolic(&(size), sizeof(size)) || \
      s2e_is_symbolic((str), size))
+
+#define IS_SYMBOLIC_STR(str) \
+	(s2e_is_symbolic(&(str), sizeof(str)) || \
+     s2e_is_symbolic((str), 0))
 #else
-#define IS_SYMBOLIC(str, size) 0
+#define IS_SYMBOLIC_STR_SIZE(str, size) 0
+#define IS_SYMBOLIC_STR(str)            0
 #endif

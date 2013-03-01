@@ -65,7 +65,7 @@ PyObject *
 PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 {
     register PyStringObject *op;
-    int can_intern = !IS_SYMBOLIC(str, size);
+    int can_intern = !IS_SYMBOLIC_STR_SIZE(str, size);
 #ifdef _SYMBEX_VARSIZE
     Py_ssize_t sym_size = size;
     s2e_get_example(&size, sizeof(size));
@@ -141,7 +141,7 @@ PyString_FromString(const char *str)
     register size_t size;
 #endif
     register PyStringObject *op;
-    int can_intern = !IS_SYMBOLIC(str, 0);
+    int can_intern = !IS_SYMBOLIC_STR(str);
 
     assert(str != NULL);
     size = strlen(str);
