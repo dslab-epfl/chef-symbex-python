@@ -1206,15 +1206,12 @@ static PyObject *
 string_item(PyStringObject *a, register Py_ssize_t i)
 {
     char pchar;
-#ifndef _SYMBEX_INTERNED_STRING
     PyObject *v;
-#endif
     if (i < 0 || i >= Py_SIZE(a)) {
         PyErr_SetString(PyExc_IndexError, "string index out of range");
         return NULL;
     }
     pchar = a->ob_sval[i];
-#ifndef _SYMBEX_INTERNED_STRING
     v = (PyObject *)characters[pchar & UCHAR_MAX];
     if (v == NULL)
         v = PyString_FromStringAndSize(&pchar, 1);
@@ -1225,9 +1222,6 @@ string_item(PyStringObject *a, register Py_ssize_t i)
         Py_INCREF(v);
     }
     return v;
-#else
-    return PyString_FromStringAndSize(&pchar, 1);
-#endif
 }
 
 static PyObject*
