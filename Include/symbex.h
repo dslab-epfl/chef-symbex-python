@@ -26,3 +26,12 @@
 		s2e_get_example(&(size), sizeof(size)); \
 	} while(0)
 #endif
+
+#ifdef _SYMBEX_INTERNED_STRING
+#define IS_SYMBOLIC(str, size) \
+	(s2e_is_symbolic(&(str), sizeof(str)) || \
+     s2e_is_symbolic(&(size), sizeof(size)) || \
+     s2e_is_symbolic((str), size))
+#else
+#define IS_SYMBOLIC(str, size) 0
+#endif
