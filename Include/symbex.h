@@ -31,11 +31,11 @@
 #define IS_SYMBOLIC_STR_SIZE(str, size) \
 	(s2e_is_symbolic(&(str), sizeof(str)) || \
      s2e_is_symbolic(&(size), sizeof(size)) || \
-     s2e_is_symbolic((str), size))
+     ((str) != NULL && s2e_is_symbolic((str), size)))
 
 #define IS_SYMBOLIC_STR(str) \
 	(s2e_is_symbolic(&(str), sizeof(str)) || \
-     s2e_is_symbolic((str), 0))
+     ((str) != NULL && s2e_is_symbolic((str), 0)))
 #else
 #define IS_SYMBOLIC_STR_SIZE(str, size) 0
 #define IS_SYMBOLIC_STR(str)            0
