@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+#include "symbex.h"
 
 /* Dictionary object type -- mapping from hashable object to object */
 
@@ -86,6 +87,9 @@ struct _dictobject {
     PyDictEntry *ma_table;
     PyDictEntry *(*ma_lookup)(PyDictObject *mp, PyObject *key, long hash);
     PyDictEntry ma_smalltable[PyDict_MINSIZE];
+#ifdef _SYMBEX_DICT_HASHES
+    int ma_flat;
+#endif
 };
 
 PyAPI_DATA(PyTypeObject) PyDict_Type;
