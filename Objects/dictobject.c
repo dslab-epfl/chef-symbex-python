@@ -8,6 +8,7 @@
 */
 
 #include "Python.h"
+#include "symbex.h"
 
 
 /* Set a key error with the specified argument, wrapping it in a

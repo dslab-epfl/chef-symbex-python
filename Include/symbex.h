@@ -2,7 +2,10 @@
 #ifdef SYMBEX_OPTIMIZATIONS
 #define _SYMBEX_ALLOC             1
 #define _SYMBEX_VARSIZE           1
+
 #define _SYMBEX_HASHES            1
+#define _SYMBEX_DICT_HASHES       1
+/*#define _SYMBEX_GLOBAL_HASHES     1*/
 
 /*#define _SYMBEX_INTERNED          1*/
 #define _SYMBEX_INTERNED_STRING   1
@@ -27,9 +30,7 @@
 	} while(0)
 #endif
 
-#ifdef _SYMBEX_HASHES
 #define _SYMBEX_HASH_VALUE       0xABC
-#endif
 
 #ifdef _SYMBEX_INTERNED_STRING
 #define IS_SYMBOLIC_STR_SIZE(str, size) \
