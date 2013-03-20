@@ -10,6 +10,10 @@
 #include "Python.h"
 #include "symbex.h"
 
+#ifdef _SYMBEX_DICT_HASHES
+#include "s2e.h"
+#endif
+
 
 /* Set a key error with the specified argument, wrapping it in a
  * tuple automatically so that tuple keys are not unpacked as the
@@ -771,7 +775,11 @@ int
 PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 {
     register PyDictObject *mp;
+#ifdef _SYMBEX_DICT_HASHES
+    long hash;
+#else
     register long hash;
+#endif
     register Py_ssize_t n_used;
 
     if (!PyDict_Check(op)) {
@@ -833,7 +841,11 @@ int
 PyDict_DelItem(PyObject *op, PyObject *key)
 {
     register PyDictObject *mp;
+#ifdef _SYMBEX_DICT_HASHES
+    long hash;
+#else
     register long hash;
+#endif
     register PyDictEntry *ep;
     PyObject *old_value, *old_key;
 
