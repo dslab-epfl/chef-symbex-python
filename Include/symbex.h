@@ -27,6 +27,10 @@
 	} while(0)
 #endif
 
+#ifdef _SYMBEX_HASHES
+#define _SYMBEX_HASH_VALUE       0xABC
+#endif
+
 #ifdef _SYMBEX_INTERNED_STRING
 #define IS_SYMBOLIC_STR_SIZE(str, size) \
 	(s2e_is_symbolic(&(str), sizeof(str)) || \
