@@ -1,6 +1,7 @@
 # Binary files
 *.o
 *.pyc
+*.pyo
 
 # Eclipse files
 .cproject
@@ -28,5 +29,6 @@
 /pyconfig.h
 /python
 /python-gdb.py
+/platform
 
 /autom4te.cache/
