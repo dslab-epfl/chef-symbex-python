@@ -1,13 +1,20 @@
 
 #ifdef SYMBEX_OPTIMIZATIONS
+/* Concretize memory block sizes at allocation */
 #define _SYMBEX_ALLOC             1
+
 #define _SYMBEX_VARSIZE           1
 
+/* Hash functions optimized for symbolic execution */
 #define _SYMBEX_HASHES            1
+
+/* A dict implementation that can fall back on linear search when symbolic
+ * objects are added as keys.
+ */
 #define _SYMBEX_DICT_HASHES       1
 /*#define _SYMBEX_GLOBAL_HASHES     1*/
 
-/*#define _SYMBEX_INTERNED          1*/
+#define _SYMBEX_INTERNED          1
 #define _SYMBEX_INTERNED_STRING   1
 
 /*#define _SYMBEX_SHORT_CIRCUITED   1*/
