@@ -733,7 +733,8 @@ PyDict_GetItem(PyObject *op, PyObject *key)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return NULL;
     	}
     }
@@ -807,7 +808,8 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return -1;
     	}
     }
@@ -868,7 +870,8 @@ PyDict_DelItem(PyObject *op, PyObject *key)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return -1;
     	}
     }
@@ -1217,7 +1220,8 @@ dict_subscript(PyDictObject *mp, register PyObject *key)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return NULL;
     	}
     }
@@ -1972,7 +1976,8 @@ dict_contains(register PyDictObject *mp, PyObject *key)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return NULL;
     	}
     }
@@ -2018,7 +2023,8 @@ dict_get(register PyDictObject *mp, PyObject *args)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return NULL;
     	}
     }
@@ -2060,7 +2066,8 @@ dict_setdefault(register PyDictObject *mp, PyObject *args)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return NULL;
     	}
     }
@@ -2118,7 +2125,8 @@ dict_pop(PyDictObject *mp, PyObject *args)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return NULL;
     	}
     }
@@ -2397,7 +2405,8 @@ PyDict_Contains(PyObject *op, PyObject *key)
 #ifdef _SYMBEX_DICT_HASHES
     if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
     	mp->ma_flat = 1;
-    	if (dictresize(mp, mp->ma_used) < 0) {
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
     		return -1;
     	}
     }
