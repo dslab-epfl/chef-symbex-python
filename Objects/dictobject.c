@@ -856,6 +856,7 @@ PyDict_DelItem(PyObject *op, PyObject *key)
         return -1;
     }
     assert(key);
+    mp = (PyDictObject *)op;
 #ifdef _SYMBEX_DICT_HASHES
     if (mp->ma_flat) {
     	hash = _SYMBEX_HASH_VALUE;
@@ -876,7 +877,6 @@ PyDict_DelItem(PyObject *op, PyObject *key)
     	}
     }
 #endif
-    mp = (PyDictObject *)op;
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return -1;
