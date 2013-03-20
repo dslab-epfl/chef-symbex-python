@@ -1212,6 +1212,9 @@ string_item(PyStringObject *a, register Py_ssize_t i)
         return NULL;
     }
     pchar = a->ob_sval[i];
+#ifdef _SYMBEX_INTERNED_STRING
+    v = PyString_FromStringAndSize(&pchar, 1);
+#else
     v = (PyObject *)characters[pchar & UCHAR_MAX];
     if (v == NULL)
         v = PyString_FromStringAndSize(&pchar, 1);
@@ -1221,6 +1224,7 @@ string_item(PyStringObject *a, register Py_ssize_t i)
 #endif
         Py_INCREF(v);
     }
+#endif
     return v;
 }
 
