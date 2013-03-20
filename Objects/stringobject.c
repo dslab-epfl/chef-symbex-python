@@ -1306,7 +1306,7 @@ string_hash(PyStringObject *a)
 #endif
   if (a->ob_shash != -1)
       return a->ob_shash;
-  a->ob_shash = Py_SIZE(a);
+  a->ob_shash = _SYMBEX_HASH_VALUE;
   return a->ob_shash;
 }
 
