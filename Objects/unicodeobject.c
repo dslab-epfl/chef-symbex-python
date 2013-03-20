@@ -6571,7 +6571,7 @@ unicode_hash(PyUnicodeObject *self)
 #endif
     if (self->hash != -1)
     	return self->hash;
-#ifdef _SYMBEX_GLOBAL_HASHES
+#if defined(_SYMBEX_GLOBAL_HASHES) || defined(_SYMBEX_CONST_HASHES)
     self->hash = _SYMBEX_HASH_VALUE;
 #else
     self->hash = PyUnicode_GET_SIZE(self);
