@@ -1094,10 +1094,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
         if (HAS_ARG(opcode))
             oparg = NEXTARG();
 
-#ifdef _SYMBEX_INSTRUMENT
-        if (s2e_running)
-        	report_trace(f, opcode);
-#endif
     dispatch_opcode:
 #ifdef DYNAMIC_EXECUTION_PROFILE
 #ifdef DXPAIRS
@@ -1120,6 +1116,11 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
                        f->f_lasti, opcode);
             }
         }
+#endif
+
+#ifdef _SYMBEX_INSTRUMENT
+        if (s2e_running)
+        	report_trace(f, opcode);
 #endif
 
         /* Main switch on opcode */
