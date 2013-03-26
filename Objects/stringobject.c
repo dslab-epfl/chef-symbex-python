@@ -1311,11 +1311,10 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
 
     	return result;
     }
-#else
+#endif
     return Py_SIZE(a) == Py_SIZE(b)
       && *a->ob_sval == *b->ob_sval
       && memcmp(a->ob_sval, b->ob_sval, Py_SIZE(a)) == 0;
-#endif
 }
 
 #ifdef _SYMBEX_HASHES
