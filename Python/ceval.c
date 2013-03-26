@@ -156,16 +156,17 @@ static PyObject * special_lookup(PyObject *, char *, PyObject **);
 
 #ifdef _SYMBEX_INSTRUMENT
 
-#define _SYMBEX_TRACE_SIZE	256
+#define _SYMBEX_TRACE_SIZE	2
 
 typedef struct {
+	uint32_t op_code;
 	uint32_t frame_count;
 	uint32_t frames[_SYMBEX_TRACE_SIZE];
 } __attribute__((packed)) TraceUpdate;
 
 static TraceUpdate trace_update;
 static int s2e_running = 0;
-static int report_trace(PyFrameObject *frame, int inst_only);
+static int report_trace(PyFrameObject *frame, uint32_t op_code);
 #endif
 
 #define NAME_ERROR_MSG \
@@ -928,9 +929,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
             }
         }
     }
-#ifdef _SYMBEX_INSTRUMENT
-	report_trace(f, 0);
-#endif
 
     co = f->f_code;
     names = co->co_names;
@@ -959,6 +957,10 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
     stack_pointer = f->f_stacktop;
     assert(stack_pointer != NULL);
     f->f_stacktop = NULL;       /* remains NULL unless yield suspends frame */
+
+#ifdef _SYMBEX_INSTRUMENT
+    s2e_running = s2e_version();
+#endif
 
 #ifdef LLTRACE
     lltrace = PyDict_GetItemString(f->f_globals, "__lltrace__") != NULL;
@@ -1083,9 +1085,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
                 goto on_error;
             }
         }
-#ifdef _SYMBEX_INSTRUMENT
-        report_trace(f, 1);
-#endif
 
         /* Extract opcode and argument */
 
@@ -1094,6 +1093,11 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
             it doesn't have to be remembered across a full loop */
         if (HAS_ARG(opcode))
             oparg = NEXTARG();
+
+#ifdef _SYMBEX_INSTRUMENT
+        if (s2e_running)
+        	report_trace(f, opcode);
+#endif
     dispatch_opcode:
 #ifdef DYNAMIC_EXECUTION_PROFILE
 #ifdef DXPAIRS
@@ -3327,29 +3331,15 @@ kwd_as_string(PyObject *kwd) {
 }
 
 #ifdef _SYMBEX_INSTRUMENT
-static int report_trace(PyFrameObject *frame, int inst_only) {
-	if (!inst_only)
-		s2e_running = s2e_version();
+static int report_trace(PyFrameObject *frame, uint32_t op_code) {
+	trace_update.op_code = op_code;
 
-	if (!s2e_running) {
-		return 0;
-	}
-
+	trace_update.frame_count = _SYMBEX_TRACE_SIZE;
 	trace_update.frames[0] = (uint32_t)frame->f_lasti;
-	if (!inst_only) {
-		PyFrameObject *current = frame;
-		uint32_t frame_counter = 1;
-
-		while (frame_counter < _SYMBEX_TRACE_SIZE && current != NULL) {
-			trace_update.frames[frame_counter] = (uintptr_t)current;
-			frame_counter++;
-			current = current->f_back;
-		}
-		trace_update.frame_count = frame_counter;
-	}
+	trace_update.frames[1] = (uintptr_t)frame;
 
 	if (s2e_invoke_plugin("InterpreterMonitor", (void*)&trace_update,
-			sizeof(TraceUpdate) + (trace_update.frame_count - 1)*sizeof(uint32_t)) != 0) {
+			sizeof(TraceUpdate)) != 0) {
 		return -1;
 	}
 
