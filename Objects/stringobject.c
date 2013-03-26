@@ -1296,25 +1296,23 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
     PyStringObject *a = (PyStringObject*) o1;
     PyStringObject *b = (PyStringObject*) o2;
 #ifdef _SYMBEX_SHORT_CIRCUITED
-    if (IS_SYMBOLIC_STR_SIZE(a->ob_sval, Py_SIZE(a)) ||
-    		IS_SYMBOLIC_STR_SIZE(b->ob_sval, Py_SIZE(b))) {
-    	int result = 1;
-    	Py_ssize_t i;
+	int result = 1;
+	Py_ssize_t i;
 
-    	if (Py_SIZE(a) != Py_SIZE(b)) {
-    		return 0;
-    	}
+	if (Py_SIZE(a) != Py_SIZE(b)) {
+		return 0;
+	}
 
-    	for (i = 0; i < Py_SIZE(a); ++i) {
-    		result &= (a->ob_sval[i] == b->ob_sval[i]);
-    	}
+	for (i = 0; i < Py_SIZE(a); ++i) {
+		result &= (a->ob_sval[i] == b->ob_sval[i]);
+	}
 
-    	return result;
-    }
-#endif
+	return result;
+#else
     return Py_SIZE(a) == Py_SIZE(b)
       && *a->ob_sval == *b->ob_sval
       && memcmp(a->ob_sval, b->ob_sval, Py_SIZE(a)) == 0;
+#endif
 }
 
 #ifdef _SYMBEX_HASHES
