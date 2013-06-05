@@ -43,10 +43,6 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "Python.h"
 #include "symbex.h"
 
-#ifdef SYMBEX_OPTIMIZATIONS
-#include "s2e.h"
-#endif
-
 #include "unicodeobject.h"
 #include "ucnhash.h"
 

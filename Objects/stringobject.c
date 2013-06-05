@@ -5,10 +5,6 @@
 #include "Python.h"
 #include "symbex.h"
 
-#ifdef SYMBEX_OPTIMIZATIONS
-#include "s2e.h"
-#endif
-
 #include <ctype.h>
 #include <stddef.h>
 

@@ -748,6 +748,7 @@ enable_shared
 enable_profiling
 with_pydebug
 with_symbex
+with_s2e
 enable_toolbox_glue
 with_libs
 with_system_expat
@@ -1420,6 +1421,7 @@ Optional Packages:
   --with-suffix=.exe      set executable suffix
   --with-pydebug          build with Py_DEBUG defined
   --with-symbex           build optimized for symbolic execution
+  --with-s2e              enable S2E VM instructions
   --with-libs='lib1 ...'  link against additional libs
   --with-system-expat     build pyexpat module using an installed expat
                           library
@@ -5405,6 +5407,29 @@ if test "$withval" != no
 then
 
 $as_echo "#define SYMBEX_OPTIMIZATIONS 1" >>confdefs.h
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; };
+else { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; };
+fi
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Check for --with-s2e
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-s2e" >&5
+$as_echo_n "checking for --with-s2e... " >&6; }
+
+# Check whether --with-s2e was given.
+if test "${with_s2e+set}" = set; then :
+  withval=$with_s2e;
+if test "$withval" != no
+then
+
+$as_echo "#define HAVE_S2E 1" >>confdefs.h
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; };

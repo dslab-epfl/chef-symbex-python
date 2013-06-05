@@ -1,5 +1,13 @@
 
 #ifdef SYMBEX_OPTIMIZATIONS
+
+#ifdef HAVE_S2E
+/* Include the proper stuff ... */
+#include <s2e.h>
+#else
+/* ... otherwise, just define dummy definitions */
+#endif
+
 /* Concretize memory block sizes at allocation */
 #define _SYMBEX_ALLOC             1
 

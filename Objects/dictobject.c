@@ -10,10 +10,6 @@
 #include "Python.h"
 #include "symbex.h"
 
-#ifdef _SYMBEX_DICT_HASHES
-#include "s2e.h"
-#endif
-
 
 /* Set a key error with the specified argument, wrapping it in a
  * tuple automatically so that tuple keys are not unpacked as the

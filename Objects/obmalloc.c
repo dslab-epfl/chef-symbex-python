@@ -19,9 +19,6 @@ static int running_on_valgrind = -1;
 
 #include "symbex.h"
 
-#ifdef _SYMBEX_ALLOC
-#include "s2e.h"
-#endif
 
 /* An object allocator for Python.
 

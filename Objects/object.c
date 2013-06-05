@@ -5,10 +5,6 @@
 #include "frameobject.h"
 #include "symbex.h"
 
-#ifdef _SYMBEX_ALLOC
-#include "s2e.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

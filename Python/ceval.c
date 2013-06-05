@@ -12,10 +12,6 @@
 #include "Python.h"
 #include "symbex.h"
 
-#ifdef _SYMBEX_INSTRUMENT
-#include "s2e.h"
-#endif
-
 #include "code.h"
 #include "frameobject.h"
 #include "eval.h"
