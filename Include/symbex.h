@@ -1,3 +1,5 @@
+#ifndef SYMBEX_H_
+#define SYMBEX_H_
 
 #ifdef SYMBEX_OPTIMIZATIONS
 
@@ -5,7 +7,30 @@
 /* Include the proper stuff ... */
 #include <s2e.h>
 #else
-/* ... otherwise, just define dummy definitions */
+/* ... otherwise, just provide dummy definitions */
+
+static inline void s2e_get_example(void *buf, int size) {
+	// Do nothing
+}
+
+static inline int s2e_is_symbolic(const void *ptr, size_t size) {
+	// Do nothing
+	return 0;
+}
+
+static inline void s2e_assume(int expression) {
+	// Do nothing
+}
+
+static inline int s2e_version(void) {
+	return 0; // Not running inside S2E
+}
+
+static inline int s2e_invoke_plugin(const char *pluginName, void *data,
+		uint32_t dataSize) {
+	return 1; // Return an error code
+}
+
 #endif
 
 /* Concretize memory block sizes at allocation */
@@ -62,3 +87,5 @@
 #define IS_SYMBOLIC_STR_SIZE(str, size) 0
 #define IS_SYMBOLIC_STR(str)            0
 #endif
+
+#endif /* !SYMBEX_H_ */
