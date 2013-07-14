@@ -919,20 +919,6 @@ else AC_MSG_RESULT(no);
 fi],
 [AC_MSG_RESULT(no)])
 
-# Check for --with-s2e
-AC_MSG_CHECKING(for --with-s2e)
-AC_ARG_WITH(s2e,
-            AS_HELP_STRING([--with-s2e], [enable S2E VM instructions]),
-[
-if test "$withval" != no
-then
-  AC_DEFINE(HAVE_S2E, 1,
-  [Define if you want to enable the S2E VM custom instructions.])
-  AC_MSG_RESULT(yes);
-else AC_MSG_RESULT(no);
-fi],
-[AC_MSG_RESULT(no)])
-
 # XXX Shouldn't the code above that fiddles with BASECFLAGS and OPT be
 # merged with this chunk of code?
 

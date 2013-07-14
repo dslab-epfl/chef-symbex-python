@@ -3,11 +3,11 @@
 
 #ifdef SYMBEX_OPTIMIZATIONS
 
-#ifdef HAVE_S2E
-/* Include the proper stuff ... */
+#include <pydebug.h>
+
 #include <s2e.h>
-#else
-/* ... otherwise, just provide dummy definitions */
+
+#if 0 /* Disable this piece of code, for now */
 
 static inline void s2e_get_example(void *buf, int size) {
 	// Do nothing

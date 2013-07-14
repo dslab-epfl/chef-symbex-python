@@ -40,7 +40,7 @@ static char **orig_argv;
 static int  orig_argc;
 
 /* command line options */
-#define BASE_OPTS "3bBc:dEhiJm:OQ:RsStuUvVW:xX?"
+#define BASE_OPTS "3bBc:dEhiJm:OQ:RsStuUvVW:xX?Y"
 
 #ifndef RISCOS
 #define PROGRAM_OPTS BASE_OPTS
@@ -63,8 +63,12 @@ Options and arguments (and corresponding environment variables):\n\
 -c cmd : program passed in as string (terminates option list)\n\
 -d     : debug output from parser; also PYTHONDEBUG=x\n\
 -E     : ignore PYTHON* environment variables (such as PYTHONPATH)\n\
--h     : print this help message and exit (also --help)\n\
--i     : inspect interactively after running script; forces a prompt even\n\
+-h     : print this help message and exit (also --help)\n"
+#ifdef SYMBEX_OPTIMIZATIONS
+"\
+-Y     : Enable S2E symbolic execution calls\n"
+#endif
+"-i     : inspect interactively after running script; forces a prompt even\n\
 ";
 static char *usage_2 = "\
          if stdin does not appear to be a terminal; also PYTHONINSPECT=x\n\
@@ -277,6 +281,11 @@ Py_Main(int argc, char **argv)
         case 'R':
             Py_HashRandomizationFlag++;
             break;
+#ifdef SYMBEX_OPTIMIZATIONS
+        case 'Y':
+        	Py_EnableS2EFlag++;
+        	break;
+#endif
         }
     }
     /* The variable is only tested for existence here; _PyRandom_Init will
@@ -284,6 +293,11 @@ Py_Main(int argc, char **argv)
     if (!Py_HashRandomizationFlag &&
         (p = Py_GETENV("PYTHONHASHSEED")) && *p != '\0')
         Py_HashRandomizationFlag = 1;
+#ifdef SYMBEX_OPTIMIZATIONS
+    if (!Py_EnableS2EFlag &&
+    	(p = Py_GETENV("PYTHONS2E")) && *p != '\0')
+    	Py_EnableS2EFlag = 1;
+#endif
 
     _PyRandom_Init();
 
@@ -428,6 +442,12 @@ Py_Main(int argc, char **argv)
         case 'R':
             /* Already handled above */
             break;
+
+#ifdef SYMBEX_OPTIMIZATIONS
+        case 'Y':
+        	/* Already handled above */
+        	break;
+#endif
 
         /* This space reserved for other options */
 
