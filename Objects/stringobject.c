@@ -3,6 +3,8 @@
 #define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
+#include "symbex.h"
+
 #include <ctype.h>
 #include <stddef.h>
 

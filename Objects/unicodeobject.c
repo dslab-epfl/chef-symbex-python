@@ -347,7 +347,6 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
             unicode->str = (Py_UNICODE*) PyObject_MALLOC(new_size);
         }
         PyObject_INIT(unicode, &PyUnicode_Type);
-    }
     } else {
 #else
     {

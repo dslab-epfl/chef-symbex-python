@@ -15,6 +15,7 @@
 
 /*#define _SYMBEX_DICT_HASHES       1*/
 /*#define _SYMBEX_GLOBAL_HASHES     1*/
+
 #define _SYMBEX_INTERNED          1
 #define _SYMBEX_INTERNED_STRING   1
 
