@@ -682,6 +682,7 @@ PYTHON_HEADERS= \
 		Include/stringobject.h \
 		Include/structmember.h \
 		Include/structseq.h \
+		Include/symbex.h \
 		Include/symtable.h \
 		Include/sysmodule.h \
 		Include/traceback.h \

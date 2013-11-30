@@ -21,6 +21,10 @@ extern int Py_DebugFlag;
 #define D(x)
 #endif
 
+#ifdef SYMBEX_OPTIMIZATIONS
+/* XXX: Not sure this is the right place for the flag... */
+int Py_EnableS2EFlag = 0;
+#endif
 
 /* STACK DATA TYPE */
 
