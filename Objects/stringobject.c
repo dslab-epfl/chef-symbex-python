@@ -1306,7 +1306,26 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
       && memcmp(a->ob_sval, b->ob_sval, Py_SIZE(a)) == 0;
 #endif
 }
+
+#ifdef _SYMBEX_HASHES
+
+static long
+string_hash(PyStringObject *a)
+{
+#ifdef Py_DEBUG
+  assert(_Py_HashSecret_Initialized);
+#endif
+  if (a->ob_shash != -1)
+      return a->ob_shash;
+#if defined(_SYMBEX_GLOBAL_HASHES) || defined(_SYMBEX_CONST_HASHES)
+  a->ob_shash = _SYMBEX_HASH_VALUE;
+#else
+  a->ob_shash = Py_SIZE(a);
+#endif
+  return a->ob_shash;
 }
+
+#else
 
 static long
 string_hash(PyStringObject *a)
@@ -1341,6 +1360,8 @@ string_hash(PyStringObject *a)
     a->ob_shash = x;
     return x;
 }
+
+#endif /* _SYMBEX_HASHES */
 
 static PyObject*
 string_subscript(PyStringObject* self, PyObject* item)
