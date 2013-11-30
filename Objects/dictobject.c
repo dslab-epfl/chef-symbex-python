@@ -8,6 +8,7 @@
 */
 
 #include "Python.h"
+#include "symbex.h"
 
 
 /* Set a key error with the specified argument, wrapping it in a
@@ -283,6 +284,9 @@ PyDict_New(void)
 #endif
     }
     mp->ma_lookup = lookdict_string;
+#ifdef _SYMBEX_DICT_HASHES
+    mp->ma_flat = 0;
+#endif
 #ifdef SHOW_TRACK_COUNT
     count_untracked++;
 #endif
@@ -650,8 +654,14 @@ dictresize(PyDictObject *mp, Py_ssize_t minused)
     for (ep = oldtable; i > 0; ep++) {
         if (ep->me_value != NULL) {             /* active entry */
             --i;
+#ifdef _SYMBEX_DICT_HASHES
+            insertdict_clean(mp, ep->me_key,
+            		         mp->ma_flat ? _SYMBEX_HASH_VALUE : (long)ep->me_hash,
+            		         ep->me_value);
+#else
             insertdict_clean(mp, ep->me_key, (long)ep->me_hash,
                              ep->me_value);
+#endif
         }
         else if (ep->me_key != NULL) {          /* dummy entry */
             --i;
@@ -702,6 +712,11 @@ PyDict_GetItem(PyObject *op, PyObject *key)
     PyThreadState *tstate;
     if (!PyDict_Check(op))
         return NULL;
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1)
     {
@@ -711,6 +726,15 @@ PyDict_GetItem(PyObject *op, PyObject *key)
             return NULL;
         }
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return NULL;
+    	}
+    }
+#endif
 
     /* We can arrive here with a NULL tstate during initialization: try
        running "python -Wi" for an example related to string interning.
@@ -748,7 +772,11 @@ int
 PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
 {
     register PyDictObject *mp;
+#ifdef _SYMBEX_DICT_HASHES
+    long hash;
+#else
     register long hash;
+#endif
     register Py_ssize_t n_used;
 
     if (!PyDict_Check(op)) {
@@ -758,6 +786,11 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
     assert(key);
     assert(value);
     mp = (PyDictObject *)op;
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (PyString_CheckExact(key)) {
         hash = ((PyStringObject *)key)->ob_shash;
         if (hash == -1)
@@ -768,6 +801,15 @@ PyDict_SetItem(register PyObject *op, PyObject *key, PyObject *value)
         if (hash == -1)
             return -1;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return -1;
+    	}
+    }
+#endif
     assert(mp->ma_fill <= mp->ma_mask);  /* at least one empty slot */
     n_used = mp->ma_used;
     Py_INCREF(value);
@@ -797,7 +839,11 @@ int
 PyDict_DelItem(PyObject *op, PyObject *key)
 {
     register PyDictObject *mp;
+#ifdef _SYMBEX_DICT_HASHES
+    long hash;
+#else
     register long hash;
+#endif
     register PyDictEntry *ep;
     PyObject *old_value, *old_key;
 
@@ -806,13 +852,27 @@ PyDict_DelItem(PyObject *op, PyObject *key)
         return -1;
     }
     assert(key);
+    mp = (PyDictObject *)op;
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return -1;
     }
-    mp = (PyDictObject *)op;
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return -1;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return -1;
@@ -1142,12 +1202,26 @@ dict_subscript(PyDictObject *mp, register PyObject *key)
     long hash;
     PyDictEntry *ep;
     assert(mp->ma_table != NULL);
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return NULL;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return NULL;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return NULL;
@@ -1884,12 +1958,26 @@ dict_contains(register PyDictObject *mp, PyObject *key)
     long hash;
     PyDictEntry *ep;
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return NULL;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return NULL;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return NULL;
@@ -1917,12 +2005,26 @@ dict_get(register PyDictObject *mp, PyObject *args)
     if (!PyArg_UnpackTuple(args, "get", 1, 2, &key, &failobj))
         return NULL;
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return NULL;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return NULL;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return NULL;
@@ -1946,12 +2048,26 @@ dict_setdefault(register PyDictObject *mp, PyObject *args)
     if (!PyArg_UnpackTuple(args, "setdefault", 1, 2, &key, &failobj))
         return NULL;
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return NULL;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return NULL;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return NULL;
@@ -1991,12 +2107,26 @@ dict_pop(PyDictObject *mp, PyObject *args)
         set_key_error(key);
         return NULL;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return NULL;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return NULL;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     if (ep == NULL)
         return NULL;
@@ -2257,12 +2387,26 @@ PyDict_Contains(PyObject *op, PyObject *key)
     PyDictObject *mp = (PyDictObject *)op;
     PyDictEntry *ep;
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (mp->ma_flat) {
+    	hash = _SYMBEX_HASH_VALUE;
+    } else
+#endif
     if (!PyString_CheckExact(key) ||
         (hash = ((PyStringObject *) key)->ob_shash) == -1) {
         hash = PyObject_Hash(key);
         if (hash == -1)
             return -1;
     }
+#ifdef _SYMBEX_DICT_HASHES
+    if (s2e_is_symbolic(&hash, sizeof(hash)) && !mp->ma_flat) {
+    	mp->ma_flat = 1;
+    	if (dictresize(mp, 2*((mp->ma_used > PyDict_MINSIZE)
+    			? mp->ma_used : PyDict_MINSIZE)) < 0) {
+    		return -1;
+    	}
+    }
+#endif
     ep = (mp->ma_lookup)(mp, key, hash);
     return ep == NULL ? -1 : (ep->me_value != NULL);
 }
@@ -2303,6 +2447,9 @@ dict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         PyDictObject *d = (PyDictObject *)self;
         /* It's guaranteed that tp->alloc zeroed out the struct. */
         assert(d->ma_table == NULL && d->ma_fill == 0 && d->ma_used == 0);
+#ifdef _SYMBEX_DICT_HASHES
+        assert(d->ma_flat == 0);
+#endif
         INIT_NONZERO_DICT_SLOTS(d);
         d->ma_lookup = lookdict_string;
         /* The object has been implicitly tracked by tp_alloc */
@@ -2437,6 +2584,9 @@ typedef struct {
     Py_ssize_t di_pos;
     PyObject* di_result; /* reusable result tuple for iteritems */
     Py_ssize_t len;
+#ifdef _SYMBEX_DICT_HASHES
+    int di_flat;
+#endif
 } dictiterobject;
 
 static PyObject *
@@ -2451,6 +2601,9 @@ dictiter_new(PyDictObject *dict, PyTypeObject *itertype)
     di->di_used = dict->ma_used;
     di->di_pos = 0;
     di->len = dict->ma_used;
+#ifdef _SYMBEX_DICT_HASHES
+    di->di_flat = dict->ma_flat;
+#endif
     if (itertype == &PyDictIterItem_Type) {
         di->di_result = PyTuple_Pack(2, Py_None, Py_None);
         if (di->di_result == NULL) {
@@ -2507,7 +2660,11 @@ static PyObject *dictiter_iternextkey(dictiterobject *di)
         return NULL;
     assert (PyDict_Check(d));
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (di->di_used != d->ma_used || di->di_flat != d->ma_flat) {
+#else
     if (di->di_used != d->ma_used) {
+#endif
         PyErr_SetString(PyExc_RuntimeError,
                         "dictionary changed size during iteration");
         di->di_used = -1; /* Make this state sticky */
@@ -2579,7 +2736,11 @@ static PyObject *dictiter_iternextvalue(dictiterobject *di)
         return NULL;
     assert (PyDict_Check(d));
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (di->di_used != d->ma_used || di->di_flat != d->ma_flat) {
+#else
     if (di->di_used != d->ma_used) {
+#endif
         PyErr_SetString(PyExc_RuntimeError,
                         "dictionary changed size during iteration");
         di->di_used = -1; /* Make this state sticky */
@@ -2651,7 +2812,11 @@ static PyObject *dictiter_iternextitem(dictiterobject *di)
         return NULL;
     assert (PyDict_Check(d));
 
+#ifdef _SYMBEX_DICT_HASHES
+    if (di->di_used != d->ma_used || di->di_flat != d->ma_flat) {
+#else
     if (di->di_used != d->ma_used) {
+#endif
         PyErr_SetString(PyExc_RuntimeError,
                         "dictionary changed size during iteration");
         di->di_used = -1; /* Make this state sticky */

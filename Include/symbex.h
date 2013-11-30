@@ -9,6 +9,11 @@
 
 /* Concretize memory block sizes at allocation */
 #define _SYMBEX_ALLOC             1
+/* A dict implementation that can fall back on linear search when symbolic
+ * objects are added as keys.
+ */
+
+/*#define _SYMBEX_DICT_HASHES       1*/
 #define _SYMBEX_INSTRUMENT        1
 #endif
 
