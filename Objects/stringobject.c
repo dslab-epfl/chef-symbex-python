@@ -57,19 +57,21 @@ PyObject *
 PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 {
     register PyStringObject *op;
+    int can_intern = !IS_SYMBOLIC_STR_SIZE(str, size);
     if (size < 0) {
         PyErr_SetString(PyExc_SystemError,
             "Negative size passed to PyString_FromStringAndSize");
         return NULL;
     }
-    if (size == 0 && (op = nullstring) != NULL) {
+
+    if (can_intern && size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
 #endif
         Py_INCREF(op);
         return (PyObject *)op;
     }
-    if (size == 1 && str != NULL &&
+    if (can_intern && size == 1 && str != NULL &&
         (op = characters[*str & UCHAR_MAX]) != NULL)
     {
 #ifdef COUNT_ALLOCS
@@ -95,18 +97,21 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
         Py_MEMCPY(op->ob_sval, str, size);
     op->ob_sval[size] = '\0';
     /* share short strings */
-    if (size == 0) {
-        PyObject *t = (PyObject *)op;
-        PyString_InternInPlace(&t);
-        op = (PyStringObject *)t;
-        nullstring = op;
-        Py_INCREF(op);
-    } else if (size == 1 && str != NULL) {
-        PyObject *t = (PyObject *)op;
-        PyString_InternInPlace(&t);
-        op = (PyStringObject *)t;
-        characters[*str & UCHAR_MAX] = op;
-        Py_INCREF(op);
+    if (can_intern) {
+		if (size == 0) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			nullstring = op;
+			Py_INCREF(op);
+		}
+		else if (size == 1 && str != NULL) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			characters[*str & UCHAR_MAX] = op;
+			Py_INCREF(op);
+		}
     }
     return (PyObject *) op;
 }
@@ -116,6 +121,7 @@ PyString_FromString(const char *str)
 {
     register size_t size;
     register PyStringObject *op;
+    int can_intern = !IS_SYMBOLIC_STR(str);
 
     assert(str != NULL);
     size = strlen(str);
@@ -124,14 +130,15 @@ PyString_FromString(const char *str)
             "string is too long for a Python string");
         return NULL;
     }
-    if (size == 0 && (op = nullstring) != NULL) {
+
+    if (can_intern && size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
 #endif
         Py_INCREF(op);
         return (PyObject *)op;
     }
-    if (size == 1 && (op = characters[*str & UCHAR_MAX]) != NULL) {
+    if (can_intern && size == 1 && (op = characters[*str & UCHAR_MAX]) != NULL) {
 #ifdef COUNT_ALLOCS
         one_strings++;
 #endif
@@ -147,19 +154,23 @@ PyString_FromString(const char *str)
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
     Py_MEMCPY(op->ob_sval, str, size+1);
-    /* share short strings */
-    if (size == 0) {
-        PyObject *t = (PyObject *)op;
-        PyString_InternInPlace(&t);
-        op = (PyStringObject *)t;
-        nullstring = op;
-        Py_INCREF(op);
-    } else if (size == 1) {
-        PyObject *t = (PyObject *)op;
-        PyString_InternInPlace(&t);
-        op = (PyStringObject *)t;
-        characters[*str & UCHAR_MAX] = op;
-        Py_INCREF(op);
+
+    if (can_intern) {
+		/* share short strings */
+		if (size == 0) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			nullstring = op;
+			Py_INCREF(op);
+		}
+		else if (size == 1) {
+			PyObject *t = (PyObject *)op;
+			PyString_InternInPlace(&t);
+			op = (PyStringObject *)t;
+			characters[*str & UCHAR_MAX] = op;
+			Py_INCREF(op);
+		}
     }
     return (PyObject *) op;
 }
@@ -1171,6 +1182,9 @@ string_item(PyStringObject *a, register Py_ssize_t i)
         return NULL;
     }
     pchar = a->ob_sval[i];
+#ifdef _SYMBEX_INTERNED_STRING
+    v = PyString_FromStringAndSize(&pchar, 1);
+#else
     v = (PyObject *)characters[pchar & UCHAR_MAX];
     if (v == NULL)
         v = PyString_FromStringAndSize(&pchar, 1);
@@ -1180,6 +1194,7 @@ string_item(PyStringObject *a, register Py_ssize_t i)
 #endif
         Py_INCREF(v);
     }
+#endif
     return v;
 }
 
