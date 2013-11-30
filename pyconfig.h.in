@@ -1029,9 +1029,20 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
-/* Define if you want to build an interpreter optimized for symbolic
-   execution. */
-#undef SYMBEX_OPTIMIZATIONS
+/* Define if you want to instrument the interpreter for symbolic execution. */
+#undef SYMBEX_INSTRUMENTATION
+
+/* Define if you want to concretize buffers during symbolic execution. */
+#undef SYMBEX_OPT_CONCRETIZE_BUFFSIZES
+
+/* Define if you want to disable fast paths during symbolic execution. */
+#undef SYMBEX_OPT_DISABLE_FAST_PATHS
+
+/* Define if you want to disable interning during symbolic execution. */
+#undef SYMBEX_OPT_DISABLE_INTERNING
+
+/* Define if you want to neutralize hashes during symbolic execution. */
+#undef SYMBEX_OPT_NEUTRALIZE_HASHES
 
 /* Define if you can safely include both <sys/select.h> and <sys/time.h>
    (which you can't on SCO ODT 3.0). */

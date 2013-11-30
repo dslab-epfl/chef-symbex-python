@@ -747,7 +747,8 @@ with_suffix
 enable_shared
 enable_profiling
 with_pydebug
-with_symbex
+enable_symbex
+enable_symbex_opt
 enable_toolbox_glue
 with_libs
 with_system_expat
@@ -1396,6 +1397,8 @@ Optional Features:
                           Build (MacOSX|Darwin) framework
   --enable-shared         disable/enable building shared python library
   --enable-profiling      enable C-level code profiling
+  --enable-symbex         build symbolic execution instrumentation
+  --enable-symbex-opt     enable/disable symbolic execution optimizations
   --enable-toolbox-glue   disable/enable MacOSX glue code for extensions
   --enable-ipv6           Enable ipv6 (with ipv4) support
   --disable-ipv6          Disable ipv6 support
@@ -1419,7 +1422,6 @@ Optional Packages:
                           compiler
   --with-suffix=.exe      set executable suffix
   --with-pydebug          build with Py_DEBUG defined
-  --with-symbex           build optimized for symbolic execution
   --with-libs='lib1 ...'  link against additional libs
   --with-system-expat     build pyexpat module using an installed expat
                           library
@@ -5394,28 +5396,87 @@ $as_echo "no" >&6; }
 fi
 
 
-# Check for --with-symbex
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --with-symbex" >&5
-$as_echo_n "checking for --with-symbex... " >&6; }
+# Check for --enable-symbex
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --enable-symbex" >&5
+$as_echo_n "checking for --enable-symbex... " >&6; }
+# Check whether --enable-symbex was given.
+if test "${enable_symbex+set}" = set; then :
+  enableval=$enable_symbex;
+fi
 
-# Check whether --with-symbex was given.
-if test "${with_symbex+set}" = set; then :
-  withval=$with_symbex;
-if test "$withval" != no
+
+if test -z "$enable_symbex"
 then
-
-$as_echo "#define SYMBEX_OPTIMIZATIONS 1" >>confdefs.h
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; };
-else { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; };
+  enable_symbex="no"
 fi
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+case "$enable_symbex" in
+yes)
+
+$as_echo "#define SYMBEX_INSTRUMENTATION 1" >>confdefs.h
+
+  ;;
+no)
+  ;;
+*)
+  as_fn_error $? "Unexpected value for option 'symbex'" "$LINENO" 5
+  ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_symbex" >&5
+$as_echo "$enable_symbex" >&6; }
+
+# Check for --enable-symbex-opt
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --enable-symbex-opt" >&5
+$as_echo_n "checking for --enable-symbex-opt... " >&6; }
+# Check whether --enable-symbex-opt was given.
+if test "${enable_symbex_opt+set}" = set; then :
+  enableval=$enable_symbex_opt;
 fi
 
+
+if test -z "$enable_symbex_opt"
+then
+  enable_symbex_opt="all"
+fi
+case "$enable_symbex_opt" in
+all)
+  symbex_opt_list="concrbuff intern hashes fastpath"
+  ;;
+none)
+  symbex_opt_list=""
+  ;;
+*)
+  symbex_opt_list=${enable_symbex_opt//,/ }
+  ;;
+esac
+for symbex_opt in $symbex_opt_list; do
+  case "$symbex_opt" in
+  concrbuff)
+
+$as_echo "#define SYMBEX_OPT_CONCRETIZE_BUFFSIZES 1" >>confdefs.h
+
+    ;;
+  intern)
+
+$as_echo "#define SYMBEX_OPT_DISABLE_INTERNING 1" >>confdefs.h
+
+    ;;
+  hashes)
+
+$as_echo "#define SYMBEX_OPT_NEUTRALIZE_HASHES 1" >>confdefs.h
+
+    ;;
+  fastpath)
+
+$as_echo "#define SYMBEX_OPT_DISABLE_FAST_PATHS 1" >>confdefs.h
+
+    ;;
+  *)
+    as_fn_error $? "Unexpected value for symbolic optimization" "$LINENO" 5
+    ;;
+  esac
+done
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_symbex_opt" >&5
+$as_echo "$enable_symbex_opt" >&6; }
 
 # XXX Shouldn't the code above that fiddles with BASECFLAGS and OPT be
 # merged with this chunk of code?
