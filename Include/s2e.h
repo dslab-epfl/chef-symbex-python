@@ -33,6 +33,9 @@
  * All contributors are listed in the S2E-AUTHORS file.
  */
 
+#ifndef _S2E_H
+#define _S2E_H
+
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
@@ -577,3 +580,5 @@ static inline int s2e_invoke_plugin(const char *pluginName, void *data, uint32_t
 
     return result;
 }
+
+#endif /* _S2E_H */
