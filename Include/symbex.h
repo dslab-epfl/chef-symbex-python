@@ -15,6 +15,7 @@
 
 /*#define _SYMBEX_DICT_HASHES       1*/
 #define _SYMBEX_INTERNED          1
+#define _SYMBEX_SHORT_CIRCUITED   1
 #define _SYMBEX_INSTRUMENT        1
 #endif
 

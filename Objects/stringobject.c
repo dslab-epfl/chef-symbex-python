@@ -1250,9 +1250,25 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
 {
     PyStringObject *a = (PyStringObject*) o1;
     PyStringObject *b = (PyStringObject*) o2;
+#ifdef _SYMBEX_SHORT_CIRCUITED
+	int result = 1;
+	Py_ssize_t i;
+
+	if (Py_SIZE(a) != Py_SIZE(b)) {
+		return 0;
+	}
+
+	for (i = 0; i < Py_SIZE(a); ++i) {
+		result &= (a->ob_sval[i] == b->ob_sval[i]);
+	}
+
+	return result;
+#else
     return Py_SIZE(a) == Py_SIZE(b)
       && *a->ob_sval == *b->ob_sval
       && memcmp(a->ob_sval, b->ob_sval, Py_SIZE(a)) == 0;
+#endif
+}
 }
 
 static long

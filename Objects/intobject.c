@@ -853,8 +853,10 @@ int_lshift(PyIntObject *v, PyIntObject *w)
         PyErr_SetString(PyExc_ValueError, "negative shift count");
         return NULL;
     }
+#ifndef _SYMBEX_SHORT_CIRCUITED
     if (a == 0 || b == 0)
         return int_int(v);
+#endif
     if (b >= LONG_BIT) {
         vv = PyLong_FromLong(PyInt_AS_LONG(v));
         if (vv == NULL)

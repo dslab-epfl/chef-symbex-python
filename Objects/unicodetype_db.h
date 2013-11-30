@@ -3276,6 +3276,39 @@ int _PyUnicode_IsWhitespace(register const Py_UNICODE ch)
 #ifdef WANT_WCTYPE_FUNCTIONS
     return iswspace(ch);
 #else
+#ifdef _SYMBEX_SHORT_CIRCUITED
+    /* Purposedly not using short-circuited operators to avoid branching */
+    return (ch == 0x0009) |
+    	   (ch == 0x000A) |
+    	   (ch == 0x000B) |
+    	   (ch == 0x000C) |
+    	   (ch == 0x000D) |
+    	   (ch == 0x001C) |
+    	   (ch == 0x001D) |
+    	   (ch == 0x001E) |
+    	   (ch == 0x001F) |
+    	   (ch == 0x0020) |
+    	   (ch == 0x0085) |
+    	   (ch == 0x00A0) |
+    	   (ch == 0x1680) |
+    	   (ch == 0x180E) |
+    	   (ch == 0x2000) |
+    	   (ch == 0x2001) |
+    	   (ch == 0x2002) |
+    	   (ch == 0x2003) |
+    	   (ch == 0x2004) |
+    	   (ch == 0x2005) |
+    	   (ch == 0x2006) |
+    	   (ch == 0x2007) |
+    	   (ch == 0x2008) |
+    	   (ch == 0x2009) |
+    	   (ch == 0x200A) |
+    	   (ch == 0x2028) |
+    	   (ch == 0x2029) |
+    	   (ch == 0x202F) |
+    	   (ch == 0x205F) |
+    	   (ch == 0x3000);
+#else
     switch (ch) {
     case 0x0009:
     case 0x000A:
@@ -3310,6 +3343,7 @@ int _PyUnicode_IsWhitespace(register const Py_UNICODE ch)
         return 1;
     }
     return 0;
+#endif /* _SYMBEX_SHORT_CIRCUITED */
 #endif
 }
 
@@ -3319,6 +3353,20 @@ int _PyUnicode_IsWhitespace(register const Py_UNICODE ch)
  */
 int _PyUnicode_IsLinebreak(register const Py_UNICODE ch)
 {
+#ifdef _SYMBEX_SHORT_CIRCUITED
+	/* Purposedly not using short-circuited operators to avoid branching */
+	return (ch == 0x000A) |
+		   (ch == 0x000B) |
+		   (ch == 0x000C) |
+		   (ch == 0x000D) |
+		   (ch == 0x001C) |
+		   (ch == 0x001D) |
+		   (ch == 0x001E) |
+		   (ch == 0x0085) |
+		   (ch == 0x2028) |
+		   (ch == 0x2029);
+
+#else
     switch (ch) {
     case 0x000A:
     case 0x000B:
@@ -3333,5 +3381,6 @@ int _PyUnicode_IsLinebreak(register const Py_UNICODE ch)
         return 1;
     }
     return 0;
+#endif /* _SYMBEX_SHORT_CIRCUITED */
 }
 
