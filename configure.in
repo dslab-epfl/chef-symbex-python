@@ -905,6 +905,20 @@ else AC_MSG_RESULT(no); Py_DEBUG='false'
 fi],
 [AC_MSG_RESULT(no)])
 
+# Check for --with-symbex
+AC_MSG_CHECKING(for --with-symbex)
+AC_ARG_WITH(symbex,
+            AS_HELP_STRING([--with-symbex], [build optimized for symbolic execution]),
+[
+if test "$withval" != no
+then
+  AC_DEFINE(SYMBEX_OPTIMIZATIONS, 1,
+  [Define if you want to build an interpreter optimized for symbolic execution.])
+  AC_MSG_RESULT(yes);
+else AC_MSG_RESULT(no);
+fi],
+[AC_MSG_RESULT(no)])
+
 # XXX Shouldn't the code above that fiddles with BASECFLAGS and OPT be
 # merged with this chunk of code?
 
