@@ -60,6 +60,11 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 {
     register PyStringObject *op;
     int can_intern = !IS_SYMBOLIC_STR_SIZE(str, size);
+#ifdef _SYMBEX_VARSIZE
+    Py_ssize_t sym_size = size;
+    s2e_get_example(&size, sizeof(size));
+    s2e_assume(sym_size >= 0 && sym_size <= size);
+#endif
     if (size < 0) {
         PyErr_SetString(PyExc_SystemError,
             "Negative size passed to PyString_FromStringAndSize");
@@ -98,6 +103,9 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
     if (str != NULL)
         Py_MEMCPY(op->ob_sval, str, size);
     op->ob_sval[size] = '\0';
+#ifdef _SYMBEX_VARSIZE
+    op->ob_size = sym_size;
+#endif
     /* share short strings */
     if (can_intern) {
 		if (size == 0) {
@@ -121,12 +129,21 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
 PyObject *
 PyString_FromString(const char *str)
 {
+#ifdef _SYMBEX_VARSIZE
+    size_t size;
+#else
     register size_t size;
+#endif
     register PyStringObject *op;
     int can_intern = !IS_SYMBOLIC_STR(str);
 
     assert(str != NULL);
     size = strlen(str);
+#ifdef _SYMBEX_VARSIZE
+    Py_ssize_t sym_size = size;
+    s2e_get_example(&size, sizeof(size));
+    s2e_assume(sym_size >= 0 && sym_size <= size);
+#endif
     if (size > PY_SSIZE_T_MAX - PyStringObject_SIZE) {
         PyErr_SetString(PyExc_OverflowError,
             "string is too long for a Python string");
@@ -156,6 +173,9 @@ PyString_FromString(const char *str)
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
     Py_MEMCPY(op->ob_sval, str, size+1);
+#ifdef _SYMBEX_VARSIZE
+    op->ob_size = sym_size;
+#endif
 
     if (can_intern) {
 		/* share short strings */

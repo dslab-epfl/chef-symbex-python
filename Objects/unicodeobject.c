@@ -313,6 +313,11 @@ static
 PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 {
     register PyUnicodeObject *unicode;
+#ifdef _SYMBEX_VARSIZE
+    Py_ssize_t sym_length = length;
+    s2e_get_example(&length, sizeof(length));
+    s2e_assume(sym_length <= length);
+#endif
 
 #ifndef _SYMBEX_INTERNED
     /* Optimization for empty strings */
@@ -372,7 +377,11 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
      */
     unicode->str[0] = 0;
     unicode->str[length] = 0;
+#ifdef _SYMBEX_VARSIZE
+    unicode->length = sym_length;
+#else
     unicode->length = length;
+#endif
     unicode->hash = -1;
     unicode->defenc = NULL;
     return unicode;
