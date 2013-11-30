@@ -2,6 +2,8 @@
 /* Integer object implementation */
 
 #include "Python.h"
+#include "symbex.h"
+
 #include <ctype.h>
 #include <float.h>
 
@@ -64,12 +66,15 @@ fill_free_list(void)
     return p + N_INTOBJECTS - 1;
 }
 
+#ifndef _SYMBEX_INTERNED
 #ifndef NSMALLPOSINTS
 #define NSMALLPOSINTS           257
 #endif
 #ifndef NSMALLNEGINTS
 #define NSMALLNEGINTS           5
 #endif
+#endif /* ifndef _SYMBEX_INTERNED */
+
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
 /* References to small integers are saved in this array so that they
    can be shared.
