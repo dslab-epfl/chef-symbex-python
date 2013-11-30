@@ -7,6 +7,8 @@
 
 #include <s2e.h>
 
+#define _SYMBEX_INSTRUMENT        1
+#endif
 #endif
 
 #endif /* !SYMBEX_H_ */
