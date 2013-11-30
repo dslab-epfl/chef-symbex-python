@@ -14,6 +14,7 @@
  */
 
 /*#define _SYMBEX_DICT_HASHES       1*/
+/*#define _SYMBEX_GLOBAL_HASHES     1*/
 #define _SYMBEX_INTERNED          1
 #define _SYMBEX_SHORT_CIRCUITED   1
 #define _SYMBEX_INSTRUMENT        1
@@ -35,6 +36,7 @@
 	} while(0)
 #endif
 
+#define _SYMBEX_HASH_VALUE       0xABC
 #endif
 
 #endif /* !SYMBEX_H_ */

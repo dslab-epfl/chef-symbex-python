@@ -1102,7 +1102,11 @@ PyObject_Hash(PyObject *v)
 {
     PyTypeObject *tp = v->ob_type;
     if (tp->tp_hash != NULL)
+#ifdef _SYMBEX_GLOBAL_HASHES
+    	return ((*tp->tp_hash)(v) == -1) ? -1 : _SYMBEX_HASH_VALUE;
+#else
         return (*tp->tp_hash)(v);
+#endif
     /* To keep to the general practice that inheriting
      * solely from object in C code should work without
      * an explicit call to PyType_Ready, we implicitly call
@@ -1112,10 +1116,18 @@ PyObject_Hash(PyObject *v)
         if (PyType_Ready(tp) < 0)
             return -1;
         if (tp->tp_hash != NULL)
+#ifdef _SYMBEX_GLOBAL_HASHES
+        	return ((*tp->tp_hash)(v) == -1) ? -1 : _SYMBEX_HASH_VALUE;
+#else
             return (*tp->tp_hash)(v);
+#endif
     }
     if (tp->tp_compare == NULL && RICHCOMPARE(tp) == NULL) {
+#ifdef _SYMBEX_GLOBAL_HASHES
+    	return _SYMBEX_HASH_VALUE;
+#else
         return _Py_HashPointer(v); /* Use address as hash value */
+#endif
     }
     /* If there's a cmp but no hash defined, the object can't be hashed */
     return PyObject_HashNotImplemented(v);
