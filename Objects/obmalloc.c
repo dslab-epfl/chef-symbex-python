@@ -17,6 +17,9 @@
 static int running_on_valgrind = -1;
 #endif
 
+#include "symbex.h"
+
+
 /* An object allocator for Python.
 
    Here is an introduction to the layers of the Python memory architecture,
@@ -751,6 +754,10 @@ PyObject_Malloc(size_t nbytes)
     poolp next;
     uint size;
 
+#ifdef _SYMBEX_ALLOC
+    PREPARE_ALLOC(nbytes);
+#endif
+
 #ifdef WITH_VALGRIND
     if (UNLIKELY(running_on_valgrind == -1))
         running_on_valgrind = RUNNING_ON_VALGRIND;
@@ -1182,6 +1189,10 @@ PyObject_Realloc(void *p, size_t nbytes)
     uint arenaindex_temp;
 #endif
 
+#ifdef _SYMBEX_ALLOC
+    PREPARE_ALLOC(nbytes);
+#endif
+
     if (p == NULL)
         return PyObject_Malloc(nbytes);
 
@@ -1261,12 +1272,18 @@ PyObject_Realloc(void *p, size_t nbytes)
 void *
 PyObject_Malloc(size_t n)
 {
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&n, sizeof(n));
+#endif
     return PyMem_MALLOC(n);
 }
 
 void *
 PyObject_Realloc(void *p, size_t n)
 {
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&n, sizeof(n));
+#endif
     return PyMem_REALLOC(p, n);
 }
 
@@ -1392,11 +1409,17 @@ p[2*S+n+S: 2*S+n+2*S]
 void *
 _PyMem_DebugMalloc(size_t nbytes)
 {
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugMallocApi(_PYMALLOC_MEM_ID, nbytes);
 }
 void *
 _PyMem_DebugRealloc(void *p, size_t nbytes)
 {
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugReallocApi(_PYMALLOC_MEM_ID, p, nbytes);
 }
 void
@@ -1409,11 +1432,17 @@ _PyMem_DebugFree(void *p)
 void *
 _PyObject_DebugMalloc(size_t nbytes)
 {
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugMallocApi(_PYMALLOC_OBJ_ID, nbytes);
 }
 void *
 _PyObject_DebugRealloc(void *p, size_t nbytes)
 {
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
     return _PyObject_DebugReallocApi(_PYMALLOC_OBJ_ID, p, nbytes);
 }
 void
@@ -1435,6 +1464,10 @@ _PyObject_DebugMallocApi(char id, size_t nbytes)
     uchar *p;           /* base address of malloc'ed block */
     uchar *tail;        /* p + 2*SST + nbytes == pointer to tail pad bytes */
     size_t total;       /* nbytes + 4*SST */
+
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
 
     bumpserialno();
     total = nbytes + 4*SST;
@@ -1491,6 +1524,10 @@ _PyObject_DebugReallocApi(char api, void *p, size_t nbytes)
     size_t total;       /* nbytes + 4*SST */
     size_t original_nbytes;
     int i;
+
+#ifdef _SYMBEX_ALLOC
+    s2e_get_example(&nbytes, sizeof(nbytes));
+#endif
 
     if (p == NULL)
         return _PyObject_DebugMallocApi(api, nbytes);
