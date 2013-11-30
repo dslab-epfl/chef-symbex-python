@@ -41,6 +41,7 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
+#include "symbex.h"
 
 #include "unicodeobject.h"
 #include "ucnhash.h"
@@ -92,16 +93,20 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 extern "C" {
 #endif
 
+#ifndef _SYMBEX_INTERNED
 /* Free list for Unicode objects */
 static PyUnicodeObject *free_list;
 static int numfree;
+#endif /* _SYMBEX_INTERNED */
 
 /* The empty Unicode object is shared to improve performance. */
 static PyUnicodeObject *unicode_empty;
 
+#ifndef _SYMBEX_INTERNED
 /* Single character Unicode strings in the Latin-1 range are being
    shared as well. */
 static PyUnicodeObject *unicode_latin1[256];
+#endif /* _SYMBEX_INTERNED */
 
 /* Default encoding to use and assume when NULL is passed as encoding
    parameter; it is initialized by _PyUnicode_Init().
@@ -257,10 +262,14 @@ int unicode_resize(register PyUnicodeObject *unicode,
        objects) in-place is not allowed. Use PyUnicode_Resize()
        instead ! */
 
+#ifndef _SYMBEX_INTERNED
     if (unicode == unicode_empty ||
         (unicode->length == 1 &&
          unicode->str[0] < 256U &&
          unicode_latin1[unicode->str[0]] == unicode)) {
+#else
+    if (unicode == unicode_empty) {
+#endif
         PyErr_SetString(PyExc_SystemError,
                         "can't resize shared unicode objects");
         return -1;
@@ -305,17 +314,20 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 {
     register PyUnicodeObject *unicode;
 
+#ifndef _SYMBEX_INTERNED
     /* Optimization for empty strings */
     if (length == 0 && unicode_empty != NULL) {
         Py_INCREF(unicode_empty);
         return unicode_empty;
     }
+#endif
 
     /* Ensure we won't overflow the size. */
     if (length > ((PY_SSIZE_T_MAX / sizeof(Py_UNICODE)) - 1)) {
         return (PyUnicodeObject *)PyErr_NoMemory();
     }
 
+#ifndef _SYMBEX_INTERNED
     /* Unicode freelist & memory allocation */
     if (free_list) {
         unicode = free_list;
@@ -336,7 +348,10 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
         }
         PyObject_INIT(unicode, &PyUnicode_Type);
     }
-    else {
+    } else {
+#else
+    {
+#endif
         size_t new_size;
         unicode = PyObject_New(PyUnicodeObject, &PyUnicode_Type);
         if (unicode == NULL)
@@ -374,6 +389,7 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
 static
 void unicode_dealloc(register PyUnicodeObject *unicode)
 {
+#ifndef _SYMBEX_INTERNED
     if (PyUnicode_CheckExact(unicode) &&
         numfree < PyUnicode_MAXFREELIST) {
         /* Keep-Alive optimization */
@@ -391,6 +407,9 @@ void unicode_dealloc(register PyUnicodeObject *unicode)
         numfree++;
     }
     else {
+#else
+    {
+#endif
         PyObject_DEL(unicode->str);
         Py_XDECREF(unicode->defenc);
         Py_TYPE(unicode)->tp_free((PyObject *)unicode);
@@ -453,6 +472,7 @@ PyObject *PyUnicode_FromUnicode(const Py_UNICODE *u,
             return (PyObject *)unicode_empty;
         }
 
+#ifndef _SYMBEX_INTERNED
         /* Single character Unicode objects in the Latin-1 range are
            shared when using this constructor */
         if (size == 1 && *u < 256) {
@@ -467,6 +487,7 @@ PyObject *PyUnicode_FromUnicode(const Py_UNICODE *u,
             Py_INCREF(unicode);
             return (PyObject *)unicode;
         }
+#endif /* _SYMBEX_INTERNED */
     }
 
     unicode = _PyUnicode_New(size);
@@ -502,6 +523,7 @@ PyObject *PyUnicode_FromStringAndSize(const char *u, Py_ssize_t size)
             return (PyObject *)unicode_empty;
         }
 
+#ifndef _SYMBEX_INTERNED
         /* Single characters are shared when using this constructor.
            Restrict to ASCII, since the input must be UTF-8. */
         if (size == 1 && Py_CHARMASK(*u) < 128) {
@@ -516,6 +538,7 @@ PyObject *PyUnicode_FromStringAndSize(const char *u, Py_ssize_t size)
             Py_INCREF(unicode);
             return (PyObject *)unicode;
         }
+#endif /* _SYMBEX_INTERNED */
 
         return PyUnicode_DecodeUTF8(u, size, NULL);
     }
@@ -8832,15 +8855,19 @@ void _PyUnicode_Init(void)
     };
 
     /* Init the implementation */
+#ifndef _SYMBEX_INTERNED
     free_list = NULL;
     numfree = 0;
+#endif /* _SYMBEX_INTERNED */
     unicode_empty = _PyUnicode_New(0);
     if (!unicode_empty)
         return;
 
     strcpy(unicode_default_encoding, "ascii");
+#ifndef _SYMBEX_INTERNED
     for (i = 0; i < 256; i++)
         unicode_latin1[i] = NULL;
+#endif /* _SYMBEX_INTERNED */
     if (PyType_Ready(&PyUnicode_Type) < 0)
         Py_FatalError("Can't initialize 'unicode'");
 
@@ -8857,6 +8884,7 @@ void _PyUnicode_Init(void)
 int
 PyUnicode_ClearFreeList(void)
 {
+#ifndef _SYMBEX_INTERNED
     int freelist_size = numfree;
     PyUnicodeObject *u;
 
@@ -8872,6 +8900,9 @@ PyUnicode_ClearFreeList(void)
     free_list = NULL;
     assert(numfree == 0);
     return freelist_size;
+#else
+    return 0;
+#endif /* _SYMBEX_INTERNED */
 }
 
 void
@@ -8882,12 +8913,14 @@ _PyUnicode_Fini(void)
     Py_XDECREF(unicode_empty);
     unicode_empty = NULL;
 
+#ifndef _SYMBEX_INTERNED
     for (i = 0; i < 256; i++) {
         if (unicode_latin1[i]) {
             Py_DECREF(unicode_latin1[i]);
             unicode_latin1[i] = NULL;
         }
     }
+#endif /* _SYMBEX_INTERNED */
     (void)PyUnicode_ClearFreeList();
 }
 
