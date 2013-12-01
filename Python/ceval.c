@@ -161,9 +161,8 @@ typedef struct {
 } __attribute__((packed)) TraceUpdate;
 
 static TraceUpdate trace_update;
-static int s2e_running = 0;
 static int report_trace(PyFrameObject *frame, uint32_t op_code);
-#endif
+#endif /* _SYMBEX_INSTRUMENT */
 
 #define NAME_ERROR_MSG \
     "name '%.200s' is not defined"
@@ -954,10 +953,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
     assert(stack_pointer != NULL);
     f->f_stacktop = NULL;       /* remains NULL unless yield suspends frame */
 
-#ifdef _SYMBEX_INSTRUMENT
-    s2e_running = s2e_version();
-#endif
-
 #ifdef LLTRACE
     lltrace = PyDict_GetItemString(f->f_globals, "__lltrace__") != NULL;
 #endif
@@ -1115,9 +1110,10 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 #endif
 
 #ifdef _SYMBEX_INSTRUMENT
-        if (s2e_running)
+        if (Py_EnableS2EFlag) {
         	report_trace(f, opcode);
-#endif
+        }
+#endif /* _SYMBEX_INSTRUMENT */
 
         /* Main switch on opcode */
         READ_TIMESTAMP(inst0);

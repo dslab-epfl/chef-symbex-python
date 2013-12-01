@@ -64,9 +64,9 @@ Options and arguments (and corresponding environment variables):\n\
 -d     : debug output from parser; also PYTHONDEBUG=x\n\
 -E     : ignore PYTHON* environment variables (such as PYTHONPATH)\n\
 -h     : print this help message and exit (also --help)\n"
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENTATION
 "\
--Y     : Enable S2E symbolic execution calls\n"
+-Y     : Enable symbolic execution instrumentation\n"
 #endif
 "-i     : inspect interactively after running script; forces a prompt even\n\
 ";
@@ -281,7 +281,7 @@ Py_Main(int argc, char **argv)
         case 'R':
             Py_HashRandomizationFlag++;
             break;
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENTATION
         case 'Y':
         	Py_EnableS2EFlag++;
         	break;
@@ -293,9 +293,9 @@ Py_Main(int argc, char **argv)
     if (!Py_HashRandomizationFlag &&
         (p = Py_GETENV("PYTHONHASHSEED")) && *p != '\0')
         Py_HashRandomizationFlag = 1;
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENTATION
     if (!Py_EnableS2EFlag &&
-    	(p = Py_GETENV("PYTHONS2E")) && *p != '\0')
+    	(p = Py_GETENV("PYTHONSYMBEX")) && *p != '\0')
     	Py_EnableS2EFlag = 1;
 #endif
 
@@ -443,7 +443,7 @@ Py_Main(int argc, char **argv)
             /* Already handled above */
             break;
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENTATION
         case 'Y':
         	/* Already handled above */
         	break;

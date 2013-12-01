@@ -28,7 +28,7 @@ PyAPI_DATA(int) _Py_QnewFlag;
 PyAPI_DATA(int) Py_Py3kWarningFlag;
 PyAPI_DATA(int) Py_HashRandomizationFlag;
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENTATION
 PyAPI_DATA(int) Py_EnableS2EFlag;
 #endif
 

@@ -1,34 +1,41 @@
 #ifndef SYMBEX_H_
 #define SYMBEX_H_
 
-#ifdef SYMBEX_OPTIMIZATIONS
+#ifdef SYMBEX_INSTRUMENTATION
 
 #include <pydebug.h>
 
 #include <s2e.h>
 
+
+#define _SYMBEX_INSTRUMENT        1
+
+
 /* Concretize memory block sizes at allocation */
+#ifdef SYMBEX_OPT_CONCRETIZE_BUFFSIZES
 #define _SYMBEX_ALLOC             1
-
 #define _SYMBEX_VARSIZE           1
+#endif /* SYMBEX_OPT_CONCRETIZE_BUFFSIZES */
 
+#ifdef SYMBEX_OPT_NEUTRALIZE_HASHES
 /* Hash functions optimized for symbolic execution */
 #define _SYMBEX_HASHES            1
-
 /* A dict implementation that can fall back on linear search when symbolic
  * objects are added as keys.
  */
-
 /*#define _SYMBEX_DICT_HASHES       1*/
 #define _SYMBEX_CONST_HASHES      1
 /*#define _SYMBEX_GLOBAL_HASHES     1*/
+#endif /* SYMBEX_OPT_NEUTRALIZE_HASHES */
 
+#ifdef SYMBEX_OPT_DISABLE_INTERNING
 #define _SYMBEX_INTERNED          1
 #define _SYMBEX_INTERNED_STRING   1
+#endif /* SYMBEX_OPT_DISABLE_INTERNING */
 
+#ifdef SYMBEX_OPT_DISABLE_FAST_PATHS
 #define _SYMBEX_SHORT_CIRCUITED   1
-#define _SYMBEX_INSTRUMENT        1
-#endif
+#endif /* SYMBEX_OPT_DISABLE_FAST_PATHS */
 
 #define MAX_ALLOC_SIZE		1024
 
@@ -61,5 +68,7 @@
 #define IS_SYMBOLIC_STR_SIZE(str, size) 0
 #define IS_SYMBOLIC_STR(str)            0
 #endif
+
+#endif /* SYMBEX_INSTRUMENTATION */
 
 #endif /* !SYMBEX_H_ */
