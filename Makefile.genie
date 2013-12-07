@@ -109,6 +109,7 @@ stamps/virtualenv-create: stamps/virtualenv-install
 	cp python-opt2-intern/python python-env/bin/python-opt2-intern
 	cp python-opt3-hashes/python python-env/bin/python-opt3-hashes
 	cp python-opt4-all/python python-env/bin/python-opt4-all
+	cp $(PYTHONSRC)/python-switcher.genie.sh python-env/bin/python
 	mkdir -p stamps && touch $@
 
 
