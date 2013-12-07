@@ -10,6 +10,13 @@
 PYTHONSRC := $(dir $(lastword $(MAKEFILE_LIST)))
 PYTHONBIN_PREFIX := $(realpath .)/python-bin
 
+VIRTUALENV := virtualenv-1.10.1
+SIMPLEJSON := simplejson-3.3.1
+
+VIRTUALENV_PKG := Jinja2 PyYAML unicodecsv webapp2 WebOb xlrd
+# TODO: Remove this?
+VIRTUALENV_PKG += coverage protobuf thrift
+
 .PHONY: all env clean
 
 all: env
@@ -73,17 +80,26 @@ python-bin/bin/python: python-opt4-all/python
 # The virtualenv
 ################
 
-virtualenv-1.10.1.tar.gz:
-	wget --no-check-certificate https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.10.1.tar.gz
+$(VIRTUALENV).tar.gz:
+	wget --no-check-certificate https://pypi.python.org/packages/source/v/virtualenv/$(VIRTUALENV).tar.gz
 
-virtualenv-1.10.1/setup.py: virtualenv-1.10.1.tar.gz
-	tar -xzvf virtualenv-1.10.1.tar.gz
+$(SIMPLEJSON).tar.gz:
+	wget --no-check-certificate https://pypi.python.org/packages/source/s/simplejson/$(SIMPLEJSON).tar.gz
+
+
+$(VIRTUALENV)/setup.py: $(VIRTUALENV).tar.gz
+	tar -xzvf $(VIRTUALENV).tar.gz
 	touch $@ # Without this, make doesn't seem to recognize the task as done
+
+$(SIMPLEJSON)/setup.py: $(SIMPLEJSON).tar.gz
+	tar -xzvf $(SIMPLEJSON).tar.gz
+	patch $(SIMPLEJSON)/setup.py <$(PYTHONSRC)/simplejson.genie.patch
+	touch $@
 
 env: stamps/virtualenv-configure
 
-stamps/virtualenv-install: $(PYTHON_BUILDS) python-bin/bin/python virtualenv-1.10.1/setup.py
-	cd virtualenv-1.10.1 && ../python-bin/bin/python setup.py install
+stamps/virtualenv-install: $(PYTHON_BUILDS) python-bin/bin/python $(VIRTUALENV)/setup.py
+	cd $(VIRTUALENV) && ../python-bin/bin/python setup.py install
 	mkdir -p stamps && touch $@
 
 stamps/virtualenv-create: stamps/virtualenv-install
@@ -95,7 +111,11 @@ stamps/virtualenv-create: stamps/virtualenv-install
 	cp python-opt4-all/python python-env/bin/python-opt4-all
 	mkdir -p stamps && touch $@
 
-stamps/virtualenv-configure: stamps/virtualenv-create
-	python-env/bin/pip install Jinja2 PyYAML simplejson unicodecsv webapp2 WebOb xlrd
-	python-env/bin/pip install coverage protobuf thrift #prettytable
+
+stamps/simplejson-install: stamps/virtualenv-create $(SIMPLEJSON)/setup.py
+	mkdir -p stamps && touch $@
+
+stamps/virtualenv-configure: stamps/virtualenv-create stamps/simplejson-install
+	python-env/bin/pip install $(VIRTUALENV_PKG)
+	cd $(SIMPLEJSON) && ../python-env/bin/python setup.py install
 	mkdir -p stamps && touch $@
