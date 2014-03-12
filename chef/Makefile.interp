@@ -26,7 +26,8 @@
 # parallel jobs.
 
 
-PYTHONSRC := $(dir $(lastword $(MAKEFILE_LIST)))
+PYTHONCHEF := $(dir $(lastword $(MAKEFILE_LIST)))
+PYTHONSRC := $(PYTHONCHEF)/..
 PYTHONBIN_PREFIX := $(realpath .)/python-bin
 
 VIRTUALENV := virtualenv-1.10.1
@@ -112,7 +113,7 @@ $(VIRTUALENV)/setup.py: $(VIRTUALENV).tar.gz
 
 $(SIMPLEJSON)/setup.py: $(SIMPLEJSON).tar.gz
 	tar -xzvf $(SIMPLEJSON).tar.gz
-	patch $(SIMPLEJSON)/setup.py <$(PYTHONSRC)/simplejson.chef.patch
+	patch $(SIMPLEJSON)/setup.py <$(PYTHONCHEF)/simplejson.chef.patch
 	touch $@
 
 env: stamps/virtualenv-configure
@@ -128,7 +129,7 @@ stamps/virtualenv-create: stamps/virtualenv-install
 	cp python-opt2-intern/python python-env/bin/python-opt2-intern
 	cp python-opt3-hashes/python python-env/bin/python-opt3-hashes
 	cp python-opt4-all/python python-env/bin/python-opt4-all
-	cp $(PYTHONSRC)/python-switcher.chef.sh python-env/bin/python
+	cp $(PYTHONCHEF)/python-switcher.sh python-env/bin/python
 	mkdir -p stamps && touch $@
 
 
