@@ -1,8 +1,9 @@
 This is Python 2.7.3, modified to be run in a Chef environment
 ==============================================================
 
-All Chef-related additions are Copyright (c) EPFL 2014.  See the file
-"LICENSE" for the general Python license terms.
+All Chef-related additions are Copyright (c) EPFL 2014 and distributed
+under the MIT license.  See the file "LICENSE" for the general Python
+license terms.
 
 
 Building a Chef-adapted Python binary
@@ -28,8 +29,8 @@ activates the dynamic instrumentation.  Alternatively, the same can be
 achieved by setting the "PYTHONSYMBEX" environment variable.
   
 
-Reproducing the Python evaluation environment in the Chef paper
----------------------------------------------------------------
+Setting up the Chef environment
+-------------------------------
 
 We evaluated the Chef-obtained Python engine in a separate Python
 virtualenv.  The binaries + the virtualenv are set up automatically
@@ -41,8 +42,6 @@ $CHEF_ROOT
   - s2e (S2E + the Chef core)
   - python-src (the Python code base -- this tree)
   - python-build (the built Python binaries and virtual environment)
-  - lua-src
-  - lua-build
 
 
 In the $CHEF_ROOT/python-build directory, run the following command:
