@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2014 EPFL.
 #
@@ -8,10 +9,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,15 +21,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+"""Setup script for the Chef Python symbolic test library."""
 
-# Switching utility between different Python versions
+__author__ = "stefan.bucur@epfl.ch (Stefan Bucur)"
 
-DIR="$( cd "$( dirname "$0" )" && pwd )"
+from distutils.core import setup, Extension
 
-if [ -z "$PYTHONSYMBEXOPT" ]; then
-    PYTHONSYMBEXOPT="4"
-fi
+def buildExtSymbex():
+    flags = dict(include_dirs=['s2e/guest/include'],
+                 libraries=['protobuf'])
 
-export PYTHONSYMBEXOPT
+    return Extension('symbex', ['src/symbexmodule.cc',
+                                'src/ConcolicSession.cc',
+                                'src/S2EGuest.cc',
+                                'src/Symbex.pb.cc',
+                                'src/SymbolicUtils.cc'],
+                     **flags)
+                     
 
-exec ${DIR}/python-opt${PYTHONSYMBEXOPT}-* "$@"
+setup_flags = dict(
+    name="ChefSymTest",
+    version='0.1',
+    description="The Chef symbolic test library",
+    author="Stefan Bucur",
+    author_email="stefan.bucur@epfl.ch",
+    url="http://dslab.epfl.ch",
+    package_dir={"": "lib"},
+    packages=['chef'],
+    ext_package='chef',
+    ext_modules=[buildExtSymbex()]
+)
+
+try:
+    setup(**setup_flags)
+except:
+    setup_flags.update(ext_modules=[])
+    setup(**setup_flags)
