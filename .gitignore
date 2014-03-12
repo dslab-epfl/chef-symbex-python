@@ -3,10 +3,11 @@
 *.pyc
 *.pyo
 
-# Eclipse files
+# IDE files
 .cproject
 .project
 .pydevproject
+.idea/
 
 # Emacs files
 *~
