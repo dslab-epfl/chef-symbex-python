@@ -78,23 +78,6 @@ class HTMLParserTest(light.SymbolicTest):
         parser.close()
 
 
-class UrllibTest(light.SymbolicTest):
-    def setUp(self):
-        self.urllib = importlib.import_module("urllib")
-        
-    def runTest(self):
-        u = self.urllib.urlopen(self.getString("input", '\x00'*10))
-
-
-class XmlEtreeTest(light.SymbolicTest):
-    def setUp(self):
-        self.ElementTree = importlib.import_module("xml.etree.ElementTree")
-    
-    def runTest(self):
-        xml = self.getString("xml", '\x00'*15, ascii=True)
-        self.ElementTree.fromstring(xml)
-
-
 ################################################################################
 # Third-party libraries
 
@@ -125,31 +108,6 @@ class UnicodeCSVTest(light.SymbolicTest):
         for row in r:
             pass
         f.close()
-
-
-class Jinja2Test(light.SymbolicTest):
-    def setUp(self):
-        self.jinja2 = importlib.import_module("jinja2")
-        
-    def runTest(self):
-        template = self.jinja2.Template(self.getString("input", '\x00'*10))
-        template.render(x="y")
-
-
-class NZMathMPQSTest(light.SymbolicTest):
-    def setUp(self):        
-        self.methods = importlib.import_module("nzmath.factor.methods")
-
-    def runTest(self):
-        self.methods.mpqs(self.getInt("number", 0, 1 << 30, 0))
-        
-
-class NZMathNextPrimeTest(light.SymbolicTest):
-    def setUp(self):
-        self.prime = importlib.import_module("nzmath.prime")
-        
-    def runTest(self):
-        self.prime.nextPrime(self.getInt("number", 0, 1 << 30, 0))
 
 
 if __name__ == "__main__":
