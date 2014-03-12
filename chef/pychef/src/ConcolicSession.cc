@@ -167,54 +167,6 @@ done:
 	return result;
 }
 
-PyObject *DecodeTimingInfo(const chef::TimingInfo &timing_info) {
-	PyObject *result = NULL;
-
-	PyObject *tstamp_obj = NULL;
-	PyObject *sdelta_obj = NULL, *tdelta_obj = NULL, *udelta_obj = NULL;
-
-	tstamp_obj = PyLong_FromUnsignedLongLong(
-			(uint64_t)timing_info.time_stamp());
-
-	if (timing_info.has_solver_delta()) {
-		sdelta_obj = PyLong_FromUnsignedLongLong(
-				(uint64_t)timing_info.solver_delta());
-	} else {
-		sdelta_obj = Py_None;
-		Py_INCREF(sdelta_obj);
-	}
-
-	if (timing_info.has_total_delta()) {
-		tdelta_obj = PyLong_FromUnsignedLongLong(
-				(uint64_t)timing_info.total_delta());
-	} else {
-		tdelta_obj = Py_None;
-		Py_INCREF(tdelta_obj);
-	}
-
-	if (timing_info.has_useful_delta()) {
-		udelta_obj = PyLong_FromUnsignedLongLong(
-				(uint64_t)timing_info.useful_delta());
-	} else {
-		udelta_obj = Py_None;
-		Py_INCREF(udelta_obj);
-	}
-
-	if (tstamp_obj == NULL || sdelta_obj == NULL || tdelta_obj == NULL
-			|| udelta_obj == NULL) {
-		goto done;
-	}
-
-	result = PyTuple_Pack(4, tstamp_obj, sdelta_obj, tdelta_obj, udelta_obj);
-
-done:
-	Py_XDECREF(tstamp_obj);
-	Py_XDECREF(sdelta_obj);
-	Py_XDECREF(tdelta_obj);
-	Py_XDECREF(udelta_obj);
-	return result;
-}
-
 }
 
 
