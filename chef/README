@@ -5,6 +5,8 @@ All Chef-related additions are Copyright (c) EPFL 2014 and distributed
 under the MIT license.  See the file "LICENSE" for the general Python
 license terms.
 
+(TODO: Bring these instructions up to date.)
+
 
 Building a Chef-adapted Python binary
 -------------------------------------
@@ -61,3 +63,6 @@ $ PYTHONSYMBEXOPT=0 python -c 'print "hi"'
 
 The optimization numbers go from 0 (no optimizations) to 4 (all
 optimizations).
+
+
+(TODO: Add the step for installing the pychef library.)
