@@ -34,7 +34,6 @@ def buildExtSymbex():
     return Extension('symbex', ['src/symbexmodule.cc',
                                 'src/ConcolicSession.cc',
                                 'src/S2EGuest.cc',
-                                'src/Symbex.pb.cc',
                                 'src/SymbolicUtils.cc'],
                      **flags)
                      
@@ -52,8 +51,4 @@ setup_flags = dict(
     ext_modules=[buildExtSymbex()]
 )
 
-try:
-    setup(**setup_flags)
-except:
-    setup_flags.update(ext_modules=[])
-    setup(**setup_flags)
+setup(**setup_flags)
