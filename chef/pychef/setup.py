@@ -28,8 +28,7 @@ __author__ = "stefan.bucur@epfl.ch (Stefan Bucur)"
 from distutils.core import setup, Extension
 
 def buildExtSymbex():
-    flags = dict(include_dirs=['s2e/guest/include'],
-                 libraries=['protobuf'])
+    flags = dict(include_dirs=['s2e/guest/include'])
 
     return Extension('symbex', ['src/symbexmodule.cc',
                                 'src/ConcolicSession.cc',
