@@ -76,6 +76,7 @@ class SymbolicTest(object):
         return value
 
     def log(self, message):
+        print "*log* %s" % message
         symbex.log(message)
     
     def concretize(self, value):
