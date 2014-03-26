@@ -48,7 +48,7 @@ typedef enum {
 typedef enum {
 	START_CONCOLIC_SESSION,
 	END_CONCOLIC_SESSION,
-	GET_CONCOLIC_ALTERNATES
+	LOG_MESSAGE
 } ConcolicCommand;
 
 
@@ -56,8 +56,8 @@ typedef struct {
 	ConcolicCommand command;
 	uint32_t max_time;
 	uint8_t is_error_path;
-	uint32_t result_ptr;
-	uint32_t result_size;
+	uint32_t arg_ptr;
+	uint32_t arg_size;
 } __attribute__((packed)) ConcolicMessage;
 
 
@@ -412,6 +412,15 @@ int ConcolicSession::EndConcolicSession(bool is_error_path) {
 	ConcolicMessage message;
 	message.command = ::END_CONCOLIC_SESSION;
 	message.is_error_path = is_error_path;
+
+	return Communicate(s2e_guest_, message);
+}
+
+int ConcolicSession::LogMessage(const char *log_msg, Py_ssize_t size) {
+	ConcolicMessage message;
+	message.command = ::LOG_MESSAGE;
+	message.arg_ptr = (uintptr_t)log_msg;
+	message.arg_size = (uint32_t)size;
 
 	return Communicate(s2e_guest_, message);
 }

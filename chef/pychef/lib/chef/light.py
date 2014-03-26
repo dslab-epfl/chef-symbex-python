@@ -74,6 +74,9 @@ class SymbolicTest(object):
             symbex.assumeascii(value)
 
         return value
+
+    def log(self, message):
+        symbex.log(message)
     
     def concretize(self, value):
         if self.replay_assgn:

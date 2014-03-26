@@ -318,6 +318,26 @@ symbex_decodetc(PyObject *self, PyObject *args) {
 }
 #endif
 
+/*----------------------------------------------------------------------------*/
+
+PyDoc_STRVAR(symbex_log_doc,
+"log(str) \n\
+\n\
+Append a string message to the current state log");
+
+static PyObject *
+symbex_log(PyObject *self, PyObject *args) {
+	const char *message;
+	Py_ssize_t size;
+
+	if (!PyArg_ParseTuple(args, "s#:log", &message, &size)) {
+		return NULL;
+	}
+
+	concolic_session->LogMessage(message, size);
+	Py_RETURN_NONE;
+}
+
 /*== Module Definition =======================================================*/
 
 PyDoc_STRVAR(module_doc,
@@ -346,6 +366,7 @@ static PyMethodDef SymbexMethods[] = {
 #if 0
 	{ "decodetc", symbex_decodetc, METH_VARARGS, symbex_decodetc_doc },
 #endif
+	{ "log", symbex_log, METH_VARARGS, symbex_log_doc },
 	{ NULL, NULL, 0, NULL } /* Sentinel */
 };
 
