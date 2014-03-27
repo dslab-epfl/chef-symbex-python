@@ -26,6 +26,7 @@
 __author__ = "stefan.bucur@epfl.ch (Stefan Bucur)"
 
 
+import argparse
 import cStringIO
 import logging
 import re
@@ -93,6 +94,20 @@ class SymbolicTest(object):
         pass
 
 
+def runFromArgs(symbolic_test, **test_args):
+    parser = argparse.ArgumentParser(description="Run or replay symbolic tests.")
+    parser.add_argument("-a", action="append", nargs=2, dest='assgn',
+                        help="Symbolic value assignment")
+    args = parser.parse_args()
+
+    assignment = { key: value.decode("string-escape") for key, value in (args.assgn or []) }
+
+    if assignment:
+        replayConcrete(symbolic_test, replay_assgn=assignment, **test_args)
+    else:
+        runSymbolic(symbolic_test, **test_args)
+
+
 def runSymbolic(symbolic_test, max_time=0, interactive=False, **test_args):
     """Runs a symbolic test in symbolic mode"""
 
@@ -111,6 +126,17 @@ def runSymbolic(symbolic_test, max_time=0, interactive=False, **test_args):
     finally:
         if not interactive:
             symbex.endconcolic(is_error_path)
+
+
+def replayConcrete(symbolic_test, replay_assgn=None, **test_args):
+    """Replay a symbolic test in concrete mode."""
+
+    test_inst = symbolic_test(replay_assgn or {}, **test_args)
+
+    try:
+        test_inst.runTest()
+    except:
+        raise
 
 
 class SymbolicTestCase(object):
