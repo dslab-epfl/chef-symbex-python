@@ -34,10 +34,8 @@ import struct
 import sys
 import traceback
 
-try:
-    from chef import symbex
-except ImportError:
-    symbex = None  # TODO: Replace with a friendlier stub
+from chef import symbex
+
 
 
 class SymbolicTest(object):
@@ -78,7 +76,8 @@ class SymbolicTest(object):
 
     def log(self, message):
         print "*log* %s" % message
-        symbex.log(message)
+        if not self.replay_assgn:
+            symbex.log(message)
     
     def concretize(self, value):
         if self.replay_assgn:
@@ -132,6 +131,7 @@ def replayConcrete(symbolic_test, replay_assgn=None, **test_args):
     """Replay a symbolic test in concrete mode."""
 
     test_inst = symbolic_test(replay_assgn or {}, **test_args)
+    test_inst.setUp()
 
     try:
         test_inst.runTest()
