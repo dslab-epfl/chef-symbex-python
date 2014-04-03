@@ -171,7 +171,7 @@ symbex_killstate(PyObject *self, PyObject *args) {
 /*----------------------------------------------------------------------------*/
 
 PyDoc_STRVAR(symbex_startconcolic_doc,
-"startconcolic([max_time]) \n\
+"startconcolic([max_time, end_at_exit]) \n\
 \n\
 Mark the start of a concolic session.");
 
