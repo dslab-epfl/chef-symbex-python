@@ -107,24 +107,29 @@ def runFromArgs(symbolic_test, **test_args):
         runSymbolic(symbolic_test, **test_args)
 
 
-def runSymbolic(symbolic_test, max_time=0, interactive=False, **test_args):
+def runSymbolic(symbolic_test, max_time=0,  **test_args):
     """Runs a symbolic test in symbolic mode"""
 
     test_inst = symbolic_test(**test_args)
     test_inst.setUp()
 
-    is_error_path = False
-    symbex.startconcolic(max_time, not interactive)
+    concolic_session = False
+    try:
+        symbex.startconcolic(max_time)
+        concolic_session = True
+    except symbex.SymbexError:
+        logging.warning("Cannot start the ConcolicSession. Proceeding without interpreter support.")
 
     try:
         test_inst.runTest()
     except:
-        if interactive:
-            traceback.print_exc()
-        is_error_path = True
+        traceback.print_exc()
+        raise
     finally:
-        if not interactive:
-            symbex.endconcolic(is_error_path)
+        if concolic_session:
+            symbex.endconcolic(False)
+        else:
+            symbex.killstate(0, "Symbolic test ended")
 
 
 def replayConcrete(symbolic_test, replay_assgn=None, **test_args):
