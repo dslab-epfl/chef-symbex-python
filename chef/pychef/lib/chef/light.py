@@ -41,11 +41,12 @@ from chef import symbex
 class SymbolicTest(object):
     """Base class for symbolic tests"""
 
-    def __init__(self, replay_assgn=None):
-        self.replay_assgn = replay_assgn
+    def __init__(self, replay=False, replay_assgn=None):
+        self.replay = replay
+        self.replay_assgn = replay_assgn or {}
 
     def getInt(self, name, default, max_value=None, min_value=None):
-        if self.replay_assgn:
+        if self.replay:
             if name not in self.replay_assgn:
                 logging.info("Key '%s' not found in assignment. Using default '%s'." % (name, default))
                 return default
@@ -59,7 +60,7 @@ class SymbolicTest(object):
         if not isinstance(default, basestring):
             raise ValueError("Default value must be string or unicode")
 
-        if self.replay_assgn:
+        if self.replay:
             if name not in self.replay_assgn:
                 logging.info("Key '%s' not found in assignment. Using default '%s'." % (name, default))
                 return default
@@ -76,11 +77,11 @@ class SymbolicTest(object):
 
     def log(self, message):
         print "*log* %s" % message
-        if not self.replay_assgn:
+        if not self.replay:
             symbex.log(message)
     
     def concretize(self, value):
-        if self.replay_assgn:
+        if self.replay:
             return value
         
         return symbex.concrete(value)
@@ -96,12 +97,14 @@ class SymbolicTest(object):
 def runFromArgs(symbolic_test, **test_args):
     parser = argparse.ArgumentParser(description="Run or replay symbolic tests.")
     parser.add_argument("-a", action="append", nargs=2, dest='assgn',
-                        help="Symbolic value assignment")
+                        help="Symbolic value assignment (implies replay mode)")
+    parser.add_argument("-r", action="store_true", dest="replay", default=False,
+                        help="Set replay mode")
     args = parser.parse_args()
 
-    assignment = { key: value.decode("string-escape") for key, value in (args.assgn or []) }
+    assignment = {key: value.decode("string-escape") for key, value in (args.assgn or [])}
 
-    if assignment:
+    if args.replay or assignment:
         replayConcrete(symbolic_test, replay_assgn=assignment, **test_args)
     else:
         runSymbolic(symbolic_test, **test_args)
@@ -135,7 +138,9 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
 def replayConcrete(symbolic_test, replay_assgn=None, **test_args):
     """Replay a symbolic test in concrete mode."""
 
-    test_inst = symbolic_test(replay_assgn or {}, **test_args)
+    test_inst = symbolic_test(replay=True,
+                              replay_assgn=replay_assgn or {},
+                              **test_args)
     test_inst.setUp()
 
     try:
