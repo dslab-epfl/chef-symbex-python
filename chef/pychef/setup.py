@@ -40,6 +40,7 @@ from distutils.spawn import find_executable
 protoc = find_executable("protoc")
 
 
+# Taken from http://protobuf.googlecode.com/svn/trunk/python/setup.py
 def generate_proto(source):
     """Invokes the Protocol Compiler to generate a _pb2.py from the given
     .proto file.  Does nothing if the output already exists and is newer than
