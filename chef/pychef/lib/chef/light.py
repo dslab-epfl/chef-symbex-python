@@ -35,7 +35,7 @@ import sys
 import traceback
 
 from chef import symbex
-
+from chef.chef_data_pb2 import TestCase as TestCase_pb2
 
 
 class SymbolicTest(object):
@@ -50,7 +50,7 @@ class SymbolicTest(object):
             if name not in self.replay_assgn:
                 logging.info("Key '%s' not found in assignment. Using default '%s'." % (name, default))
                 return default
-            return self.replay_assgn[name]
+            return int(self.replay_assgn[name])
         elif not (max_value is None and min_value is None):
             return symbex.symint(default, name, max_value, min_value)
         else:
@@ -96,10 +96,14 @@ class SymbolicTest(object):
 
 def runFromArgs(symbolic_test, **test_args):
     parser = argparse.ArgumentParser(description="Run or replay symbolic tests.")
-    parser.add_argument("-a", action="append", nargs=2, dest='assgn',
-                        help="Symbolic value assignment (implies replay mode)")
-    parser.add_argument("-r", action="store_true", dest="replay", default=False,
-                        help="Set replay mode")
+
+    replay_mode = parser.add_mutually_exclusive_group()
+    replay_mode.add_argument("-a", action="append", nargs=2, dest='assgn',
+                             help="Symbolic value assignment")
+    replay_mode.add_argument("-r", action="store_true", dest="replay", default=False,
+                             help="Replay with default concolics")
+    replay_mode.add_argument("-f", dest="replay_file",
+                             help="Replay from file with test cases")
     args = parser.parse_args()
 
     assignment = {key: value.decode("string-escape") for key, value in (args.assgn or [])}
@@ -150,65 +154,47 @@ def replayConcrete(symbolic_test, replay_assgn=None, **test_args):
 
 
 class SymbolicTestCase(object):
-    _assgn_re = re.compile(r'([\w.#]+)=>"((?:\\x[0-9A-Fa-f]{2}|\\.|[^"])*)"')
+    def __init__(self):
+        self._proto_msg = None
 
-    def __init__(self, line):
-        # Sample valid line:
-        # 1404853 0xb7436a28 0 1/1 1/1 -1/-1 arg2_name.s#value=>"\x00\x00\x00" ...
-
-        tokens = line.strip().split(" ", 6)
-
-        self.timestamp = int(tokens[0])
-        self.fork_pc = int(tokens[1], 16)
-
-        try:
-            self.target_dist = int(tokens[2])
-        except ValueError:
-            self.target_dist = None
-            self.path_divergence_dist = None
-            self.cfg_divergence_dist = None
-            self.min_dist = None
-            self.max_dist = None
-            assignment_token = line.strip().split(" ", 2)[2]
-        else:
-            if tokens[3] == "-/-":
-                self.path_divergence_dist = (None, None)
-            else:
-                self.path_divergence_dist = tuple(map(int, tokens[3].split("/")))
-
-            if tokens[4] == "-/-":
-                self.cfg_divergence_dist = (None, None)
-            else:
-                self.cfg_divergence_dist = tuple(map(int, tokens[4].split("/")))
-
-            self.min_dist, self.max_dist = tuple(map(int, tokens[5].split("/")))
-
-            assignment_token = tokens[6]
-            
-        self.assgn = {}
-        for k, v in self._assgn_re.findall(assignment_token):
-            if "." in k:
-                name, signature = k.rsplit(".", 1)
-                kind, _ = signature.split("#")
-            else:
-                name = k
-                kind = "s"
-            value = v.decode("string_escape")
-            
-            if kind == "i":
-                self.assgn[name] = struct.unpack("<i", value)[0]
-            else:
-                self.assgn[name] = value
-
-    def coversNewHLPath(self):
-        return self.path_divergence_dist != (None, None)
-
-    def coversNewHLCode(self):
-        return self.cfg_divergence_dist != (None, None)
+        self.time_stamp = None
+        self.assignment = {}
+        self.output = None
 
     @classmethod
-    def loadFromFile(cls, test_cases_file):
-        return [cls(line) for line in test_cases_file]
+    def from_protobuf(cls, data):
+        message = TestCase_pb2()
+        message.ParseFromString(data)
+
+        test_case = cls()
+        test_case._proto_msg = message
+
+        test_case.time_stamp = message.time_stamp
+        test_case.assignment = {assgn.name: assgn.value
+                                for assgn in message.input.var_assignment}
+        test_case.output = message.output
+
+        return test_case
+
+    @classmethod
+    def from_file(cls, f):
+        header_fmt = "=I"
+        header_size = struct.calcsize(header_fmt)
+
+        test_cases = []
+
+        while True:
+            header = f.read(header_size)
+            if len(header) < header_size:
+                break
+            msg_size = struct.unpack(header_fmt, header)[0]
+            message = f.read(msg_size)
+            if len(message) < msg_size:
+                break
+
+            test_cases.append(cls.from_protobuf(message))
+
+        return test_cases
 
 
 class SymbolicTestReplayer(object):
