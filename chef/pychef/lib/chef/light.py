@@ -44,6 +44,11 @@ class SymbolicTest(object):
     def __init__(self, replay=False, replay_assgn=None):
         self.replay = replay
         self.replay_assgn = replay_assgn or {}
+        self._log_roll = []
+
+    @property
+    def log_roll(self):
+        return "".join(self._log_roll)
 
     def getInt(self, name, default, max_value=None, min_value=None):
         if self.replay:
@@ -77,7 +82,9 @@ class SymbolicTest(object):
 
     def log(self, message):
         print "*log* %s" % message
-        if not self.replay:
+        if self.replay:
+            self._log_roll.append(message)
+        else:
             symbex.log(message)
     
     def concretize(self, value):
