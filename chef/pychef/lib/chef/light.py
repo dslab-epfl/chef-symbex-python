@@ -157,6 +157,8 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
 
 
 class SymbolicTestCase(object):
+    _assignment_name_re = re.compile(r"([^.]*)(?:[.]([is])(?:#(\w+))?)?")  # Values of form: name.k#value
+
     def __init__(self):
         self._proto_msg = None
 
@@ -167,6 +169,17 @@ class SymbolicTestCase(object):
         self.high_level_path_id = None
 
     @classmethod
+    def _decode_assignment(cls, name, value):
+        match = cls._assignment_name_re.match(name)
+        base_name, kind = match.group(1), (match.group(2) or "s")
+        if kind == "s":
+            return base_name, value
+        elif kind == "i":
+            return base_name, struct.unpack("<i", value)[0]
+        else:
+            raise ValueError("Invalid assignment encoding")
+
+    @classmethod
     def from_protobuf(cls, data):
         message = TestCase_pb2()
         message.ParseFromString(data)
@@ -175,8 +188,8 @@ class SymbolicTestCase(object):
         test_case._proto_msg = message
 
         test_case.time_stamp = message.time_stamp
-        test_case.assignment = {assgn.name: assgn.value
-                                for assgn in message.input.var_assignment}
+        test_case.assignment = dict(cls._decode_assignment(assgn.name, assgn.value)
+                                    for assgn in message.input.var_assignment)
         test_case.output = message.output
         test_case.high_level_path_id = message.high_level_path_id
 
