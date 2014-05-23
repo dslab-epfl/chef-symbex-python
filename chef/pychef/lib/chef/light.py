@@ -115,8 +115,18 @@ def runFromArgs(symbolic_test, **test_args):
 
     assignment = {key: value.decode("string-escape") for key, value in (args.assgn or [])}
 
-    if args.replay or assignment:
-        replayConcrete(symbolic_test, replay_assgn=assignment, **test_args)
+    if args.replay or assignment or args.replay_file:
+        replayer = TestCaseReplayer(symbolic_test, **test_args)
+        if args.replay_file:
+            with open(args.replay_file, "r") as f:
+                test_cases = SymbolicTestCase.from_file(f)
+                replayer.replay(test_cases)
+        elif args.replay:
+            replayer.replay_assignment({})
+        else:
+            replayer.replay_assignment(assignment)
+
+        print replayer.collect()
     else:
         runSymbolic(symbolic_test, **test_args)
 
@@ -144,20 +154,6 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
             symbex.endconcolic(False)
         else:
             symbex.killstate(0, "Symbolic test ended")
-
-
-def replayConcrete(symbolic_test, replay_assgn=None, **test_args):
-    """Replay a symbolic test in concrete mode."""
-
-    test_inst = symbolic_test(replay=True,
-                              replay_assgn=replay_assgn or {},
-                              **test_args)
-    test_inst.setUp()
-
-    try:
-        test_inst.runTest()
-    except:
-        raise
 
 
 class SymbolicTestCase(object):
@@ -191,8 +187,6 @@ class SymbolicTestCase(object):
         header_fmt = "=I"
         header_size = struct.calcsize(header_fmt)
 
-        test_cases = []
-
         while True:
             header = f.read(header_size)
             if len(header) < header_size:
@@ -202,46 +196,29 @@ class SymbolicTestCase(object):
             if len(message) < msg_size:
                 break
 
-            test_cases.append(cls.from_protobuf(message))
-
-        return test_cases
+            yield cls.from_protobuf(message)
 
 
-class SymbolicTestReplayer(object):
+class TestCaseReplayer(object):
     cov_line_re = re.compile(r"""^(.+\S+)\s+  # The file name
                                   (\d+)\s+    # No. of statements
                                   (\d+)\s+    # Missed statements
                                   (\d+)%\s*$  # Total coverage""", re.X)
 
-    def __init__(self, symbolic_test, measure_cov=True, **test_args):
+    def __init__(self, symbolic_test, **test_args):
         self.symbolic_test = symbolic_test
         self.test_args = test_args
         self.errors = []
 
-        self._cov = None
-        if measure_cov:
-            import coverage
-            self._cov = coverage.coverage(cover_pylib=True, branch=False,
-                                          config_file=None, source=None)
+        import coverage
+        self._cov = coverage.coverage(cover_pylib=True, branch=False,
+                                      config_file=None, source=None)
+        self._cov.start()
 
-    def replayFromTestCases(self, test_cases_file):
-        if self._cov:
-            self._cov.erase()
-            self._cov.start()
+    def replay_assignment(self, assignment):
+        logging.info("Replaying %s" % assignment)
 
-        test_cases = SymbolicTestCase.loadFromFile(test_cases_file)
-
-        for test_case in test_cases:
-            self._replayAssignment(test_case.assgn)
-
-        if self._cov:
-            self._cov.stop()
-
-    def _replayAssignment(self, assgn):
-        logging.info("Replaying %s" % str(assgn))
-
-        # Construct the test object
-        test_inst = self.symbolic_test(replay_assgn=assgn, **self.test_args)
+        test_inst = self.symbolic_test(replay=True, replay_assgn=assignment, **self.test_args)
         test_inst.setUp()
 
         try:
@@ -249,12 +226,25 @@ class SymbolicTestReplayer(object):
         except:
             logging.exception("Error detected")
             self.errors.append((sys.exc_info()[0].__name__,
-                                str(assgn),
+                                str(assignment),
                                 repr(traceback.format_exc())))
 
-    def getCoverageReport(self):
-        if not self._cov:
-            raise ValueError("Coverage not enabled")
+        return test_inst
+
+    def replay_test_case(self, test_case):
+        test_inst = self.replay_assignment(test_case.assignment)
+
+        if test_inst.log_roll != test_case.output:
+            logging.warning("Mismatched test case output output:")
+            logging.warning("Original: %s" % test_case.output)
+            logging.warning("Replayed: %s" % test_inst.log_roll)
+
+    def replay(self, test_cases):
+        for test_case in test_cases:
+            self.replay_test_case(test_case)
+
+    def collect(self):
+        self._cov.stop()
         
         result = {}
 

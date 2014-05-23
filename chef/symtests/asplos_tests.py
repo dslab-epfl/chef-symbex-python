@@ -133,9 +133,9 @@ if __name__ == "__main__":
         
         logging.basicConfig(level=logging.INFO, format='** %(message)s')
         
-        replayer = light.SymbolicTestReplayer(test_class)
+        replayer = light.CoverageReplayer(test_class)
         with open(os.path.join(args.exp_dir, "hl_test_cases.dat"), "r") as f:
-            replayer.replayFromTestCases(f)
+            replayer.replay(f)
         with open(os.path.join(args.exp_dir, "coverage.json"), "w") as f:
             json.dump(replayer.getCoverageReport(), f, indent=True)
     else:
