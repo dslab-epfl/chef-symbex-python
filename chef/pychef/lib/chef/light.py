@@ -161,6 +161,8 @@ class SymbolicTestCase(object):
         self.assignment = {}
         self.output = None
 
+        self.high_level_path_id = None
+
     @classmethod
     def from_protobuf(cls, data):
         message = TestCase_pb2()
@@ -173,6 +175,7 @@ class SymbolicTestCase(object):
         test_case.assignment = {assgn.name: assgn.value
                                 for assgn in message.input.var_assignment}
         test_case.output = message.output
+        test_case.high_level_path_id = message.high_level_path_id
 
         return test_case
 
