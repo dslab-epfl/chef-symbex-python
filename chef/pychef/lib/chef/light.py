@@ -267,6 +267,7 @@ class TestCaseReplayer(object):
                          omit=None, include=None)
 
         for line in buff.getvalue().splitlines():
+            print line
             match = self.cov_line_re.match(line)
             if not match:
                 continue
