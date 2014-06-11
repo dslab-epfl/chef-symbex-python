@@ -32,8 +32,8 @@ import subprocess
 import sys
 
 
-from distutils.core import setup, Extension
-from distutils.command.build_py import build_py as _build_py
+from setuptools import setup, Extension
+from setuptools.command import build_py as _build_py
 from distutils.spawn import find_executable
 
 
@@ -75,8 +75,11 @@ class build_py(_build_py):
         _build_py.run(self)
 
 
-setup(name="ChefSymTest",
+setup(name="py-chef-symbex",
       version='0.1',
+      install_requires=["argparse>=1.2.1",
+                        "coverage>=3.7.1",
+                        "protobuf>=2.5.0"],
       description="The Chef symbolic test library",
       author="Stefan Bucur",
       author_email="stefan.bucur@epfl.ch",
