@@ -126,7 +126,7 @@ def runFromArgs(symbolic_test, **test_args):
         else:
             replayer.replay_assignment(assignment)
 
-        print replayer.collect()
+        replayer.collect()
     else:
         runSymbolic(symbolic_test, **test_args)
 
@@ -274,7 +274,7 @@ class TestCaseReplayer(object):
             file_name = match.group(1)
             if file_name == "TOTAL":
                 continue # XXX: Hack, hack, there might be a file named "TOTAL"
-            logging.info("  Processing coverage for '%s'" % file_name)
+            logging.debug("  Processing coverage for '%s'" % file_name)
 
             # XXX: Not very nice either, but the coverage module is quite
             # cumbersome to use for non-trivial tasks.
