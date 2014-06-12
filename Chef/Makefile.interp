@@ -102,7 +102,7 @@ $(VIRTUALENV)/setup.py: $(VIRTUALENV).tar.gz
 	tar -xzvf $(VIRTUALENV).tar.gz
 	touch $@ # Without this, make doesn't seem to recognize the task as done
 
-env: stamps/virtualenv-configure
+env: stamps/virtualenv-create
 
 stamps/virtualenv-install: $(PYTHON_BUILDS) python-bin/bin/python $(VIRTUALENV)/setup.py
 	cd $(VIRTUALENV) && ../python-bin/bin/python setup.py install
@@ -116,8 +116,4 @@ stamps/virtualenv-create: stamps/virtualenv-install
 	cp python-opt3-hashes/python python-env/bin/python-opt3-hashes
 	cp python-opt4-all/python python-env/bin/python-opt4-all
 	cp $(PYTHONCHEF)/python-switcher.sh python-env/bin/python
-	mkdir -p stamps && touch $@
-
-stamps/virtualenv-configure: stamps/virtualenv-create
-	python-env/bin/pip install -r $(PYTHONCHEF)/target-requirements.txt
 	mkdir -p stamps && touch $@
