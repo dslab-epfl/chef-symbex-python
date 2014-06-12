@@ -101,7 +101,7 @@ class SymbolicTest(object):
         pass
 
 
-def runFromArgs(symbolic_test, **test_args):
+def runFromArgs(symbolic_test, arg_list=None, **test_args):
     parser = argparse.ArgumentParser(description="Run or replay symbolic tests.")
 
     replay_mode = parser.add_mutually_exclusive_group()
@@ -111,7 +111,7 @@ def runFromArgs(symbolic_test, **test_args):
                              help="Replay with default concolics")
     replay_mode.add_argument("-f", dest="replay_file",
                              help="Replay from file with test cases")
-    args = parser.parse_args()
+    args = parser.parse_args(args=arg_list)
 
     assignment = {key: value.decode("string-escape") for key, value in (args.assgn or [])}
 
