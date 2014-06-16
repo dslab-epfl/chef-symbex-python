@@ -27,6 +27,7 @@ __author__ = "stefan.bucur@epfl.ch (Stefan Bucur)"
 
 
 import argparse
+import collections
 import cStringIO
 import logging
 import re
@@ -156,17 +157,40 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
             symbex.killstate(0, "Symbolic test ended")
 
 
+def _read_proto_messages(f):
+    """Iterates over the protobuf messages in a file."""
+
+    header_fmt = "=I"
+    header_size = struct.calcsize(header_fmt)
+
+    while True:
+        header = f.read(header_size)
+        if len(header) < header_size:
+            break
+        msg_size = struct.unpack(header_fmt, header)[0]
+        message = f.read(msg_size)
+        if len(message) < msg_size:
+            break
+
+        yield message
+
+
 class SymbolicTestCase(object):
     _assignment_name_re = re.compile(r"([^.]*)(?:[.]([is])(?:#(\w+))?)?")  # Values of form: name.k#value
 
     def __init__(self):
         self._proto_msg = None
 
-        self.time_stamp = None
+        self._time_stamp = None
         self.assignment = {}
         self.output = None
 
         self.high_level_path_id = None
+
+    @property
+    def time_stamp(self):
+        """Timestamp in seconds"""
+        return float(self._time_stamp) / 1000000
 
     @classmethod
     def _decode_assignment(cls, name, value):
@@ -187,7 +211,7 @@ class SymbolicTestCase(object):
         test_case = cls()
         test_case._proto_msg = message
 
-        test_case.time_stamp = message.time_stamp
+        test_case._time_stamp = message.time_stamp
         test_case.assignment = dict(cls._decode_assignment(assgn.name, assgn.value)
                                     for assgn in message.input.var_assignment)
         test_case.output = message.output
@@ -197,19 +221,17 @@ class SymbolicTestCase(object):
 
     @classmethod
     def from_file(cls, f):
-        header_fmt = "=I"
-        header_size = struct.calcsize(header_fmt)
-
-        while True:
-            header = f.read(header_size)
-            if len(header) < header_size:
-                break
-            msg_size = struct.unpack(header_fmt, header)[0]
-            message = f.read(msg_size)
-            if len(message) < msg_size:
-                break
-
+        for message in _read_proto_messages(f):
             yield cls.from_protobuf(message)
+
+    @classmethod
+    def last_from_file(cls, f, max_count=1):
+        return map(cls.from_protobuf,
+                   collections.deque(_read_proto_messages(f), max_count))
+
+    @classmethod
+    def count_from_file(cls, f):
+        return sum(1 for _ in _read_proto_messages(f))
 
 
 class TestCaseReplayer(object):
