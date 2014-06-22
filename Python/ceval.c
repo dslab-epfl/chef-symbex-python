@@ -154,13 +154,176 @@ static PyObject * special_lookup(PyObject *, char *, PyObject **);
 
 #define _SYMBEX_TRACE_SIZE	2
 
+#define _SYMBEX_OP_EBRANCH_POS   0
+#define _SYMBEX_OP_THROWS_POS    1
+#define _SYMBEX_OP_CALL_POS      2
+
 typedef struct {
 	uint32_t op_code;
+	uint32_t op_attr;
 	uint32_t frame_count;
 	uint32_t frames[_SYMBEX_TRACE_SIZE];
 } __attribute__((packed)) TraceUpdate;
 
 static int report_trace(PyFrameObject *frame, uint32_t op_code);
+
+// {Is branch, may throw, is call}
+static int opcode_attr[][3] = {
+    {0, 0, 0}, // STOP_CODE
+    {0, 0, 0}, // POP_TOP
+    {0, 0, 0}, // ROT_TWO
+    {0, 0, 0}, // ROT_THREE
+    {0, 0, 0}, // DUP_TOP
+    {0, 0, 0}, // ROT_FOUR
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // NOP
+    {0, 1, 0}, // UNARY_POSITIVE
+    {0, 1, 0}, // UNARY_NEGATIVE
+    {0, 1, 0}, // UNARY_NOT
+    {0, 1, 0}, // UNARY_CONVERT
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // UNARY_INVERT
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // BINARY_POWER
+    {0, 1, 0}, // BINARY_MULTIPLY
+    {0, 1, 0}, // BINARY_DIVIDE
+    {0, 1, 0}, // BINARY_MODULO
+    {0, 1, 0}, // BINARY_ADD
+    {0, 1, 0}, // BINARY_SUBTRACT
+    {0, 1, 0}, // BINARY_SUBSCR
+    {0, 1, 0}, // BINARY_FLOOR_DIVIDE
+    {0, 1, 0}, // BINARY_TRUE_DIVIDE
+    {0, 1, 0}, // INPLACE_FLOOR_DIVIDE
+    {0, 1, 0}, // INPLACE_TRUE_DIVIDE
+    {0, 1, 0}, // SLICE
+    {0, 1, 0}, // unused
+    {0, 1, 0}, // unused
+    {0, 1, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // STORE_SLICE
+    {0, 1, 0}, // unused
+    {0, 1, 0}, // unused
+    {0, 1, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // DELETE_SLICE
+    {0, 1, 0}, // unused
+    {0, 1, 0}, // unused
+    {0, 1, 0}, // unused
+    {0, 0, 0}, // STORE_MAP
+    {0, 1, 0}, // INPLACE_ADD
+    {0, 1, 0}, // INPLACE_SUBTRACT
+    {0, 1, 0}, // INPLACE_MULTIPLY
+    {0, 1, 0}, // INPLACE_DIVIDE
+    {0, 1, 0}, // INPLACE_MODULO
+    {0, 1, 0}, // STORE_SUBSCR
+    {0, 1, 0}, // DELETE_SUBSCR
+    {0, 1, 0}, // BINARY_LSHIFT
+    {0, 1, 0}, // BINARY_RSHIFT
+    {0, 1, 0}, // BINARY_AND
+    {0, 1, 0}, // BINARY_XOR
+    {0, 1, 0}, // BINARY_OR
+    {0, 1, 0}, // INPLACE_POWER
+    {0, 0, 0}, // GET_ITER
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // PRINT_EXPR
+    {0, 1, 0}, // PRINT_ITEM
+    {0, 1, 0}, // PRINT_NEWLINE
+    {0, 1, 0}, // PRINT_ITEM_TO
+    {0, 1, 0}, // PRINT_NEWLINE_TO
+    {0, 1, 0}, // INPLACE_LSHIFT
+    {0, 1, 0}, // INPLACE_RSHIFT
+    {0, 1, 0}, // INPLACE_AND
+    {0, 1, 0}, // INPLACE_XOR
+    {0, 1, 0}, // INPLACE_OR
+    {0, 0, 0}, // BREAK_LOOP
+    {0, 0, 0}, // WITH_CLEANUP
+    {0, 1, 0}, // LOAD_LOCALS
+    {0, 0, 0}, // RETURN_VALUE
+    {0, 0, 0}, // IMPORT_STAR
+    {0, 1, 0}, // EXEC_STMT
+    {0, 0, 0}, // YIELD_VALUE
+    {0, 0, 0}, // POP_BLOCK
+    {0, 0, 0}, // END_FINALLY
+    {0, 1, 0}, // BUILD_CLASS
+    {0, 1, 0}, // STORE_NAME
+    {0, 1, 0}, // DELETE_NAME
+    {0, 1, 0}, // UNPACK_SEQUENCE
+    {1, 0, 0}, // FOR_ITER
+    {0, 1, 0}, // LIST_APPEND
+    {0, 1, 0}, // STORE_ATTR
+    {0, 1, 0}, // DELETE_ATTR
+    {0, 1, 0}, // STORE_GLOBAL
+    {0, 1, 0}, // DELETE_GLOBAL
+    {0, 0, 0}, // DUP_TOPX
+    {0, 0, 0}, // LOAD_CONST
+    {0, 1, 0}, // LOAD_NAME
+    {0, 0, 0}, // BUILD_TUPLE // XXX: Resume from here filling in the throw col
+    {0, 0, 0}, // BUILD_LIST
+    {0, 0, 0}, // BUILD_SET
+    {0, 0, 0}, // BUILD_MAP
+    {0, 0, 0}, // LOAD_ATTR
+    {0, 0, 0}, // COMPARE_OP
+    {0, 0, 1}, // IMPORT_NAME
+    {0, 0, 0}, // IMPORT_FROM
+    {0, 0, 0}, // JUMP_FORWARD
+    {0, 1, 0}, // JUMP_IF_FALSE_OR_POP
+    {0, 1, 0}, // JUMP_IF_TRUE_OR_POP
+    {0, 0, 0}, // JUMP_ABSOLUTE
+    {1, 0, 0}, // POP_JUMP_IF_FALSE
+    {1, 0, 0}, // POP_JUMP_IF_TRUE
+    {0, 1, 0}, // LOAD_GLOBAL
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // CONTINUE_LOOP
+    {0, 0, 0}, // SETUP_LOOP
+    {0, 0, 0}, // SETUP_EXCEPT
+    {0, 0, 0}, // SETUP_FINALLY
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // LOAD_FAST
+    {0, 0, 0}, // STORE_FAST
+    {0, 1, 0}, // DELETE_FAST
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 1, 0}, // RAISE_VARARGS
+    {0, 0, 1}, // CALL_FUNCTION
+    {0, 0, 0}, // MAKE_FUNCTION
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // MAKE_CLOSURE
+    {0, 1, 0}, // LOAD_CLOSURE
+    {0, 1, 0}, // LOAD_DEREF
+    {0, 1, 0}, // STORE_DEREF
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // unused
+    {0, 0, 1}, // CALL_FUNCTION_VAR
+    {0, 0, 1}, // CALL_FUNCTION_KW
+    {0, 0, 1}, // CALL_FUNCTION_VAR_KW
+    {0, 0, 0}, // SETUP_WITH
+    {0, 0, 0}, // unused
+    {0, 0, 0}, // EXTENDED_ARG
+    {0, 1, 0}, // SET_ADD
+    {0, 0, 0}, // MAP_ADD
+};
+
+#define _SYMBEX_OPCODE_ATTR(opcode) \
+    (((opcode_attr[opcode][0] & 1) << _SYMBEX_OP_EBRANCH_POS) | \
+     ((opcode_attr[opcode][1] & 1) << _SYMBEX_OP_THROWS_POS) | \
+     ((opcode_attr[opcode][2] & 1) << _SYMBEX_OP_CALL_POS))
+
 #endif /* _SYMBEX_INSTRUMENT */
 
 #define NAME_ERROR_MSG \
@@ -3328,6 +3491,7 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 	static int monitor_disabled;
 
 	trace_update.op_code = op_code;
+	trace_update.op_attr = _SYMBEX_OPCODE_ATTR(op_code);
 
 	trace_update.frame_count = _SYMBEX_TRACE_SIZE;
 	trace_update.frames[0] = (uint32_t)frame->f_lasti;
