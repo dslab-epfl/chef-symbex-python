@@ -280,8 +280,8 @@ static int opcode_attr[][3] = {
     {0, 0, 1}, // IMPORT_NAME
     {0, 0, 0}, // IMPORT_FROM
     {0, 0, 0}, // JUMP_FORWARD
-    {0, 1, 0}, // JUMP_IF_FALSE_OR_POP
-    {0, 1, 0}, // JUMP_IF_TRUE_OR_POP
+    {1, 0, 0}, // JUMP_IF_FALSE_OR_POP
+    {1, 0, 0}, // JUMP_IF_TRUE_OR_POP
     {0, 0, 0}, // JUMP_ABSOLUTE
     {1, 0, 0}, // POP_JUMP_IF_FALSE
     {1, 0, 0}, // POP_JUMP_IF_TRUE
