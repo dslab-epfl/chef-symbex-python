@@ -184,6 +184,7 @@ class SymbolicTestCase(object):
         self._time_stamp = None
         self.assignment = {}
         self.output = None
+        self.relevant_path_count = None
 
         self.high_level_path_id = None
 
@@ -216,6 +217,8 @@ class SymbolicTestCase(object):
                                     for assgn in message.input.var_assignment)
         test_case.output = message.output
         test_case.high_level_path_id = message.high_level_path_id
+        if message.HasField('relevant_path_count'):
+            test_case.relevant_path_count = message.relevant_path_count
 
         return test_case
 

@@ -41,6 +41,7 @@ message TestCase {
 
   optional uint64 high_level_path_id = 8;
   repeated ForkPoint fork_point = 7;
+  optional uint32 relevant_path_count = 15;
 
   // FIXME: Shady metrics, should remove in the future
   optional uint32 dist_to_uncovered = 14;
