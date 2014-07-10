@@ -40,8 +40,10 @@ clean:
 	rm -rf stamps/
 	rm -rf python-opt0-none/ python-opt1-concrbuff/ python-opt2-intern/ python-opt3-hashes/ python-opt4-all/
 
-PYTHON_BUILDS := python-opt0-none/python python-opt1-concrbuff/python \
-                 python-opt2-intern/python python-opt3-hashes/python python-opt4-all/python
+PYTHON_BUILDS := python-opt0-none/python python-opt4-all/python
+               # python-opt1-concrbuff/python
+               # python-opt2-intern/python 
+               # python-opt3-hashes/python
 
 # XXX: This looks "a bit" repetitive, maybe there is a way to factor
 # out the common patterns...
@@ -111,9 +113,9 @@ stamps/virtualenv-install: $(PYTHON_BUILDS) python-bin/bin/python $(VIRTUALENV)/
 stamps/virtualenv-create: stamps/virtualenv-install
 	python-bin/bin/virtualenv python-env
 	cp python-opt0-none/python python-env/bin/python-opt0-none
-	cp python-opt1-concrbuff/python python-env/bin/python-opt1-concrbuff
-	cp python-opt2-intern/python python-env/bin/python-opt2-intern
-	cp python-opt3-hashes/python python-env/bin/python-opt3-hashes
+	# cp python-opt1-concrbuff/python python-env/bin/python-opt1-concrbuff
+	# cp python-opt2-intern/python python-env/bin/python-opt2-intern
+	# cp python-opt3-hashes/python python-env/bin/python-opt3-hashes
 	cp python-opt4-all/python python-env/bin/python-opt4-all
 	cp $(PYTHONCHEF)/python-switcher.sh python-env/bin/python
 	mkdir -p stamps && touch $@
