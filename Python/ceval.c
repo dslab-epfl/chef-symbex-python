@@ -165,6 +165,26 @@ typedef struct {
 	uint32_t frames[_SYMBEX_TRACE_SIZE];
 } __attribute__((packed)) TraceUpdate;
 
+
+typedef enum {
+    START_CONCOLIC_SESSION,
+    END_CONCOLIC_SESSION,
+    LOG_MESSAGE,
+    BEGIN_MERGE_AREA,
+    END_MERGE_AREA
+} ConcolicCommand;
+
+
+typedef struct {
+    ConcolicCommand command;
+    uint32_t max_time;
+    uint8_t _unused0;
+    uint32_t arg_ptr;
+    uint32_t arg_size;
+} __attribute__((packed)) ConcolicMessage;
+
+static void begin_merge_area(void);
+static void end_merge_area(void);
 static int report_trace(PyFrameObject *frame, uint32_t op_code);
 
 // {Is branch, may throw, is call}
@@ -1133,6 +1153,12 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
     }
 
     for (;;) {
+#ifdef _SYMBEX_INSTRUMENT
+        if (Py_EnableS2EFlag) {
+            end_merge_area();
+        }
+#endif /* _SYMBEX_INSTRUMENT */
+
 #ifdef WITH_TSC
         if (inst1 == 0) {
             /* Almost surely, the opcode executed a break
@@ -1274,6 +1300,7 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 #ifdef _SYMBEX_INSTRUMENT
         if (Py_EnableS2EFlag) {
         	report_trace(f, opcode);
+        	begin_merge_area();
         }
 #endif /* _SYMBEX_INSTRUMENT */
 
@@ -3508,6 +3535,28 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 	}
 
 	return 0;
+}
+
+
+static void begin_merge_area(void) {
+    ConcolicMessage message;
+    memset(&message, 0, sizeof(message));
+
+    message.command = BEGIN_MERGE_AREA;
+
+    s2e_disable_all_apic_interrupts();
+    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+}
+
+
+static void end_merge_area(void) {
+    ConcolicMessage message;
+    memset(&message, 0, sizeof(message));
+
+    message.command = END_MERGE_AREA;
+
+    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+    s2e_enable_all_apic_interrupts();
 }
 #endif
 
