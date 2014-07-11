@@ -3555,7 +3555,7 @@ static void end_merge_area(void) {
 
     message.command = END_MERGE_AREA;
 
-    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+    s2e_invoke_plugin_concrete("ConcolicSession", (void*)&message, sizeof(message));
     // s2e_enable_all_apic_interrupts();
 }
 #endif
