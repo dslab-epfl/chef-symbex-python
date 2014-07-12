@@ -1153,12 +1153,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
     }
 
     for (;;) {
-#ifdef _SYMBEX_INSTRUMENT
-        if (Py_EnableS2EFlag) {
-            end_merge_area();
-        }
-#endif /* _SYMBEX_INSTRUMENT */
-
 #ifdef WITH_TSC
         if (inst1 == 0) {
             /* Almost surely, the opcode executed a break
@@ -1300,6 +1294,7 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 #ifdef _SYMBEX_INSTRUMENT
         if (Py_EnableS2EFlag) {
         	report_trace(f, opcode);
+        	end_merge_area();
         	begin_merge_area();
         }
 #endif /* _SYMBEX_INSTRUMENT */
