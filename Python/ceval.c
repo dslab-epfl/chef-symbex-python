@@ -170,8 +170,7 @@ typedef enum {
     START_CONCOLIC_SESSION,
     END_CONCOLIC_SESSION,
     LOG_MESSAGE,
-    BEGIN_MERGE_AREA,
-    END_MERGE_AREA
+    MERGE_BARRIER
 } ConcolicCommand;
 
 
@@ -183,8 +182,7 @@ typedef struct {
     uint32_t arg_size;
 } __attribute__((packed)) ConcolicMessage;
 
-static void begin_merge_area(void);
-static void end_merge_area(void);
+static void merge_barrier(void);
 static int report_trace(PyFrameObject *frame, uint32_t op_code);
 
 // {Is branch, may throw, is call}
@@ -1294,8 +1292,7 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 #ifdef _SYMBEX_INSTRUMENT
         if (Py_EnableS2EFlag) {
         	report_trace(f, opcode);
-        	end_merge_area();
-        	begin_merge_area();
+        	merge_barrier();
         }
 #endif /* _SYMBEX_INSTRUMENT */
 
@@ -3533,26 +3530,18 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 }
 
 
-static void begin_merge_area(void) {
+static void merge_barrier(void) {
     ConcolicMessage message;
     memset(&message, 0, sizeof(message));
 
-    message.command = BEGIN_MERGE_AREA;
+    message.command = MERGE_BARRIER;
 
     // s2e_disable_all_apic_interrupts();
-    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+    s2e_invoke_plugin_concrete("ConcolicSession",
+            (void*)&message, sizeof(message));
 }
 
 
-static void end_merge_area(void) {
-    ConcolicMessage message;
-    memset(&message, 0, sizeof(message));
-
-    message.command = END_MERGE_AREA;
-
-    s2e_invoke_plugin_concrete("ConcolicSession", (void*)&message, sizeof(message));
-    // s2e_enable_all_apic_interrupts();
-}
 #endif
 
 
