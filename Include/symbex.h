@@ -69,6 +69,9 @@
 #define IS_SYMBOLIC_STR(str)            0
 #endif
 
+#else
+#define IS_SYMBOLIC_STR_SIZE(str, size) 0
+#define IS_SYMBOLIC_STR(str)            0
 #endif /* SYMBEX_INSTRUMENTATION */
 
 #endif /* !SYMBEX_H_ */
