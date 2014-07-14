@@ -94,6 +94,13 @@ class SymbolicTest(object):
         
         return symbex.concrete(value)
 
+    def printException(self):
+        if self.replay:
+            traceback.print_exc()
+        else:
+            exc_type, _, _ = sys.exc_info()
+            print >>sys.stderr, "%s (Not printing details in symbolic mode)" % exc_type.__name__
+
     def setUp(self):
         """Called once before the test execution."""
         pass
@@ -148,7 +155,7 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
     try:
         test_inst.runTest()
     except:
-        traceback.print_exc()
+        test_inst.printException()
         raise
     finally:
         if concolic_session:
