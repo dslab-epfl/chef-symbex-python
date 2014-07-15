@@ -6,6 +6,29 @@
 #include <floatingpoint.h>
 #endif
 
+extern void chef_fn_begin(const char *fn_name);
+extern void chef_fn_end(const char *fn_name);
+extern void chef_bb(int bb);
+
+
+static long int fn_count = 0;
+static long int bb_count = 0;
+static int indent = 0;
+
+void chef_fn_begin(const char *fn_name) {
+    fn_count++;
+    indent++;
+}
+
+void chef_fn_end(const char *fn_name) {
+    indent--;
+}
+
+void chef_bb(int bb) {
+    bb_count++;
+}
+
+
 int
 main(int argc, char **argv)
 {

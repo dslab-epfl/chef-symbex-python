@@ -171,3 +171,16 @@ PySys_WriteStderr(const char *format, ...)
     vfprintf(stderr, format, va);
     va_end(va);
 }
+
+void chef_fn_begin(const char *fn_name) {
+
+}
+
+void chef_fn_end(const char *fn_name) {
+
+}
+
+void chef_bb(int bb) {
+
+}
+
