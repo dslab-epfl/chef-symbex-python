@@ -13,8 +13,16 @@ extern void chef_bb(int);
 
 #ifdef SYMBEX_INSTRUMENTATION
 
+extern void chef_set_enabled(int enabled);
+
+static int enable_state = 0;
+
+void chef_set_enabled(int enabled) {
+    enable_state = enabled;
+}
+
 void chef_fn_begin(const char *fn_name, int size) {
-    if (!Py_EnableS2EFlag) {
+    if (!enable_state) {
         return;
     }
 
@@ -32,7 +40,7 @@ void chef_fn_begin(const char *fn_name, int size) {
 }
 
 void chef_fn_end(const char *fn_name, int size) {
-    if (!Py_EnableS2EFlag) {
+    if (!enable_state) {
         return;
     }
 
@@ -50,7 +58,7 @@ void chef_fn_end(const char *fn_name, int size) {
 }
 
 void chef_bb(int bb) {
-    if (!Py_EnableS2EFlag) {
+    if (!enable_state) {
         return;
     }
 

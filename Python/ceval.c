@@ -152,6 +152,8 @@ static PyObject * special_lookup(PyObject *, char *, PyObject **);
 
 #ifdef _SYMBEX_INSTRUMENT
 
+extern void chef_set_enabled(int enabled);
+
 static void merge_barrier(void);
 static int report_trace(PyFrameObject *frame, uint32_t op_code);
 
@@ -3493,8 +3495,12 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 	if (s2e_invoke_plugin("InterpreterMonitor", (void*)&trace_update,
 			sizeof(TraceUpdate)) != 0) {
 		monitor_disabled = 1;
+		chef_set_enabled(0);
 		return -1;
 	}
+
+	// TODO: This should be provided by the analysis tool...
+	chef_set_enabled(op_code == CALL_FUNCTION);
 
 	return 0;
 }
