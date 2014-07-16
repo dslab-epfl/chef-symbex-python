@@ -172,11 +172,11 @@ PySys_WriteStderr(const char *format, ...)
     va_end(va);
 }
 
-void chef_fn_begin(const char *fn_name) {
+void chef_fn_begin(const char *fn_name, int size) {
 
 }
 
-void chef_fn_end(const char *fn_name) {
+void chef_fn_end(const char *fn_name, int size) {
 
 }
 

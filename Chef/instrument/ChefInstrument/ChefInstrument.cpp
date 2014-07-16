@@ -40,8 +40,8 @@ struct ChefInstrument : public ModulePass {
     }
 
     virtual bool runOnModule(Module &M) {
-        FunctionType *FnInstrumentType = TypeBuilder<void (types::i<8>*),
-                true>::get(M.getContext());
+        FunctionType *FnInstrumentType = TypeBuilder<void (types::i<8>*,
+                types::i<32>), true>::get(M.getContext());
         FunctionType *BBInstrumentType = TypeBuilder<void (types::i<32>),
                 true>::get(M.getContext());
 
@@ -49,15 +49,13 @@ struct ChefInstrument : public ModulePass {
         FnChefEnd = M.getOrInsertFunction("chef_fn_end", FnInstrumentType);
         FnChefBB = M.getOrInsertFunction("chef_bb", BBInstrumentType);
 
-        for (Module::iterator it = M.begin(), ie = M.end(); it != ie; ++it) {
-            Function &F = *it;
+        for (Module::iterator I = M.begin(), IE = M.end(); I != IE; ++I) {
+            Function &F = *I;
 
             if (F.empty() || &F == FnChefBegin || &F == FnChefEnd || &F == FnChefBB) {
-                // errs() << "Skipping: " << F.getName() << '\n';
                 continue;
             }
 
-            // errs() << "Processing: " << F.getName() << '\n';
             instrumentBasicBlocks(M, F);
             instrumentFunction(M, F);
         }
@@ -65,29 +63,34 @@ struct ChefInstrument : public ModulePass {
     }
 
     Constant *getFnNameSymbol(Module &M, Function &F) {
-        Constant *fn_name = ConstantDataArray::getString(F.getContext(),
+        Constant *FnName = ConstantDataArray::getString(F.getContext(),
                 F.getName(), true);
-        GlobalVariable *fn_name_gvar = new GlobalVariable(M,
-                fn_name->getType(), true, GlobalValue::PrivateLinkage, 0);
-        fn_name_gvar->setInitializer(fn_name);
+        GlobalVariable *FnNameGVar = new GlobalVariable(M,
+                FnName->getType(), true, GlobalValue::PrivateLinkage, 0);
+        FnNameGVar->setInitializer(FnName);
 
-        ConstantInt *zero = ConstantInt::get(Type::getInt32Ty(F.getContext()), 0);
-        std::vector<Constant*> indices;
-        indices.push_back(zero);
-        indices.push_back(zero);
+        ConstantInt *Zero = ConstantInt::get(Type::getInt32Ty(F.getContext()), 0);
+        std::vector<Constant*> GEPIndices;
+        GEPIndices.push_back(Zero);
+        GEPIndices.push_back(Zero);
 
-        return ConstantExpr::getGetElementPtr(fn_name_gvar, indices);
+        return ConstantExpr::getGetElementPtr(FnNameGVar, GEPIndices);
     }
 
     void instrumentFunction(Module &M, Function &F) {
-        Constant *fn_name_ptr = getFnNameSymbol(M, F);
+        std::vector<Value*> fn_args;
+        fn_args.push_back(getFnNameSymbol(M, F));
+        fn_args.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()),
+                F.getName().size()));
+
+
         UnifyFunctionExitNodes &UFEN = getAnalysis<UnifyFunctionExitNodes>(F);
 
-        CallInst::Create(FnChefBegin, fn_name_ptr, "",
+        CallInst::Create(FnChefBegin, fn_args, "",
                 F.getEntryBlock().getFirstNonPHI());
 
         if (UFEN.getReturnBlock()) {
-            CallInst::Create(FnChefEnd, fn_name_ptr, "",
+            CallInst::Create(FnChefEnd, fn_args, "",
                     UFEN.getReturnBlock()->getTerminator());
         }
     }
