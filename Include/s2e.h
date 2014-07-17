@@ -573,19 +573,9 @@ static inline int s2e_range(int start, int end, const char *name)
     }
 }
 
-/**
- *  Transmits a buffer of dataSize length to the plugin named in pluginName.
- *  eax contains the failure code upon return, 0 for success.
- */
-static inline int s2e_invoke_plugin(const char *pluginName, void *data, uint32_t dataSize)
-{
+static inline int __raw_invoke_plugin(const char *pluginName, void *data, uint32_t dataSize) {
     int result;
 
-    if (!Py_EnableS2EFlag)
-    	return 1;
-
-    __s2e_touch_string(pluginName);
-    __s2e_touch_buffer((char*)data, dataSize);
     __asm__ __volatile__(
         S2E_INSTRUCTION_SIMPLE(0B)
         : "=a" (result) : "a" (pluginName), "c" (data), "d" (dataSize) : "memory"
@@ -594,19 +584,10 @@ static inline int s2e_invoke_plugin(const char *pluginName, void *data, uint32_t
     return result;
 }
 
-/**
- *  Transmits a buffer of dataSize length to the plugin named in pluginName.
- *  eax contains the failure code upon return, 0 for success.
- *  The functions ensures that the CPU state is concrete before invoking the plugin.
- */
-static inline int s2e_invoke_plugin_concrete(const char *pluginName, void *data, uint32_t dataSize)
-{
+static inline int __raw_invoke_plugin_concrete(const char *pluginName, void *data, uint32_t dataSize) {
     int result;
-    __s2e_touch_string(pluginName);
-    __s2e_touch_buffer(data, dataSize);
 
     __asm__ __volatile__(
-
         #ifdef __x86_64__
         "push %%rbx\n"
         "push %%rsi\n"
@@ -677,6 +658,37 @@ static inline int s2e_invoke_plugin_concrete(const char *pluginName, void *data,
     return result;
 }
 
+/**
+ *  Transmits a buffer of dataSize length to the plugin named in pluginName.
+ *  eax contains the failure code upon return, 0 for success.
+ */
+static inline int s2e_invoke_plugin(const char *pluginName, void *data, uint32_t dataSize)
+{
+    if (!Py_EnableS2EFlag)
+    	return 1;
+
+    __s2e_touch_string(pluginName);
+    __s2e_touch_buffer((char*)data, dataSize);
+
+    return __raw_invoke_plugin(pluginName, data, dataSize);
+}
+
+/**
+ *  Transmits a buffer of dataSize length to the plugin named in pluginName.
+ *  eax contains the failure code upon return, 0 for success.
+ *  The functions ensures that the CPU state is concrete before invoking the plugin.
+ */
+static inline int s2e_invoke_plugin_concrete(const char *pluginName, void *data, uint32_t dataSize)
+{
+    if (!Py_EnableS2EFlag)
+        return 1;
+
+    __s2e_touch_string(pluginName);
+    __s2e_touch_buffer(data, dataSize);
+
+    return __raw_invoke_plugin_concrete(pluginName, data, dataSize);
+}
+
 
 typedef struct _merge_desc_t {
     uint64_t start;
@@ -705,6 +717,50 @@ static inline int s2e_hex_dump(const char *name, void *addr, unsigned size)
         :: "a"(addr), "b" (size), "c" (name)
     );
     return fd;
+}
+
+
+typedef struct {
+    uint32_t id;
+    uint32_t data;
+    uint32_t dataSize;
+} __attribute__((packed)) syscall_t;
+
+
+static inline int s2e_system_call(const char *pluginName,
+        uint32_t id, void *data, uint32_t dataSize) {
+    if (!Py_EnableS2EFlag)
+        return 1;
+
+    syscall_t syscall;
+    syscall.id = id;
+    syscall.data = (uint32_t)data;
+    syscall.dataSize = dataSize;
+
+    __s2e_touch_string(pluginName);
+    if (data) {
+        __s2e_touch_buffer((char*)data, dataSize);
+    }
+
+    return __raw_invoke_plugin(pluginName, &syscall, sizeof(syscall));
+}
+
+static inline int s2e_system_call_concrete(const char *pluginName,
+        uint32_t id, void *data, uint32_t dataSize) {
+    if (!Py_EnableS2EFlag)
+        return 1;
+
+    syscall_t syscall;
+    syscall.id = id;
+    syscall.data = (uint32_t)data;
+    syscall.dataSize = dataSize;
+
+    __s2e_touch_string(pluginName);
+    if (data) {
+        __s2e_touch_buffer((char*)data, dataSize);
+    }
+
+    return __raw_invoke_plugin(pluginName, &syscall, sizeof(syscall));
 }
 
 #endif /* _S2E_H */
