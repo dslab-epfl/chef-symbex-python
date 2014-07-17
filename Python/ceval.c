@@ -3504,7 +3504,7 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 
 
 static void merge_barrier(void) {
-    int fine_grained_trace = 0;
+    volatile int fine_grained_trace = 0;
 
     s2e_system_call_concrete("ConcolicSession", MERGE_BARRIER, NULL, 0);
     s2e_system_call("ConcolicSession", FINE_GRAINED_TRACE,

@@ -728,7 +728,7 @@ typedef struct {
 
 
 static inline int s2e_system_call(const char *pluginName,
-        uint32_t id, void *data, uint32_t dataSize) {
+        uint32_t id, volatile void *data, uint32_t dataSize) {
     if (!Py_EnableS2EFlag)
         return 1;
 
@@ -746,7 +746,7 @@ static inline int s2e_system_call(const char *pluginName,
 }
 
 static inline int s2e_system_call_concrete(const char *pluginName,
-        uint32_t id, void *data, uint32_t dataSize) {
+        uint32_t id, volatile void *data, uint32_t dataSize) {
     if (!Py_EnableS2EFlag)
         return 1;
 
