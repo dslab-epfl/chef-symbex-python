@@ -734,7 +734,7 @@ static inline int s2e_system_call(const char *pluginName,
 
     syscall_t syscall;
     syscall.id = id;
-    syscall.data = (uint32_t)data;
+    syscall.data = (uint32_t)(uintptr_t)data;
     syscall.dataSize = dataSize;
 
     __s2e_touch_string(pluginName);
@@ -752,7 +752,7 @@ static inline int s2e_system_call_concrete(const char *pluginName,
 
     syscall_t syscall;
     syscall.id = id;
-    syscall.data = (uint32_t)data;
+    syscall.data = (uint32_t)(uintptr_t)data;
     syscall.dataSize = dataSize;
 
     __s2e_touch_string(pluginName);

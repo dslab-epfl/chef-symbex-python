@@ -3504,11 +3504,12 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 
 
 static void merge_barrier(void) {
-    int fine_grained_merge = 0;
+    int fine_grained_trace = 0;
 
-    s2e_system_call_concrete("ConcolicSession", MERGE_BARRIER,
-            &fine_grained_merge, sizeof(fine_grained_merge));
-    chef_set_enabled(fine_grained_merge);
+    s2e_system_call_concrete("ConcolicSession", MERGE_BARRIER, NULL, 0);
+    s2e_system_call("ConcolicSession", FINE_GRAINED_TRACE,
+            &fine_grained_trace, sizeof(fine_grained_trace));
+    chef_set_enabled(fine_grained_trace);
 }
 #endif
 

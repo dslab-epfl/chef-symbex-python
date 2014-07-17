@@ -90,7 +90,8 @@ typedef enum {
     MERGE_BARRIER,
     FUNCTION_BEGIN,
     FUNCTION_END,
-    BASIC_BLOCK
+    BASIC_BLOCK,
+    FINE_GRAINED_TRACE
 } ConcolicCommand;
 
 
