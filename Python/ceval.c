@@ -3479,7 +3479,7 @@ kwd_as_string(PyObject *kwd) {
 #ifdef _SYMBEX_INSTRUMENT
 static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 	static TraceUpdate trace_update;
-	static int monitor_disabled;
+	static int monitor_disabled = 0;
 
 	trace_update.op_code = op_code;
 	trace_update.op_attr = _SYMBEX_OPCODE_ATTR(op_code);
@@ -3499,25 +3499,17 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 		return -1;
 	}
 
-	// TODO: This should be provided by the analysis tool...
-	chef_set_enabled(op_code == CALL_FUNCTION);
-
 	return 0;
 }
 
 
 static void merge_barrier(void) {
-    ConcolicMessage message;
-    memset(&message, 0, sizeof(message));
+    int fine_grained_merge = 0;
 
-    message.command = MERGE_BARRIER;
-
-    // s2e_disable_all_apic_interrupts();
-    s2e_invoke_plugin_concrete("ConcolicSession",
-            (void*)&message, sizeof(message));
+    s2e_system_call_concrete("ConcolicSession", MERGE_BARRIER,
+            &fine_grained_merge, sizeof(fine_grained_merge));
+    chef_set_enabled(fine_grained_merge);
 }
-
-
 #endif
 
 

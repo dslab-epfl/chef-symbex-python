@@ -684,7 +684,7 @@ static inline int s2e_invoke_plugin_concrete(const char *pluginName, void *data,
         return 1;
 
     __s2e_touch_string(pluginName);
-    __s2e_touch_buffer(data, dataSize);
+    __s2e_touch_buffer((char*)data, dataSize);
 
     return __raw_invoke_plugin_concrete(pluginName, data, dataSize);
 }

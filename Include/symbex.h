@@ -94,14 +94,6 @@ typedef enum {
 } ConcolicCommand;
 
 
-typedef struct {
-    ConcolicCommand command;
-    uint32_t max_time;
-    uint8_t _unused0;
-    uint32_t arg_ptr;
-    uint32_t arg_size;
-} __attribute__((packed)) ConcolicMessage;
-
 #else
 #define IS_SYMBOLIC_STR_SIZE(str, size) 0
 #define IS_SYMBOLIC_STR(str)            0

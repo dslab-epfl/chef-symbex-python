@@ -26,17 +26,7 @@ void chef_fn_begin(const char *fn_name, int size) {
         return;
     }
 
-    static ConcolicMessage message = {
-        .command = FUNCTION_BEGIN,
-        .max_time = 0,
-        .arg_ptr = 0,
-        .arg_size = 0
-    };
-
-    message.arg_ptr = (uintptr_t)fn_name;
-    message.arg_size = size;
-
-    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+    s2e_system_call("ConcolicSession", FUNCTION_BEGIN, (void*)fn_name, size);
 }
 
 void chef_fn_end(const char *fn_name, int size) {
@@ -44,17 +34,7 @@ void chef_fn_end(const char *fn_name, int size) {
         return;
     }
 
-    static ConcolicMessage message = {
-        .command = FUNCTION_END,
-        .max_time = 0,
-        .arg_ptr = 0,
-        .arg_size = 0
-    };
-
-    message.arg_ptr = (uintptr_t)fn_name;
-    message.arg_size = size;
-
-    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+    s2e_system_call("ConcolicSession", FUNCTION_END, (void*)fn_name, size);
 }
 
 void chef_bb(int bb) {
@@ -62,16 +42,7 @@ void chef_bb(int bb) {
         return;
     }
 
-    static ConcolicMessage message = {
-        .command = BASIC_BLOCK,
-        .max_time = 0,
-        .arg_ptr = 0,
-        .arg_size = 0
-    };
-
-    message.arg_ptr = (uint32_t)bb;
-
-    s2e_invoke_plugin("ConcolicSession", (void*)&message, sizeof(message));
+    s2e_system_call("ConcolicSession", BASIC_BLOCK, NULL, (uint32_t)bb);
 }
 
 #else
