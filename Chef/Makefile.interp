@@ -34,6 +34,10 @@ CHEF_INSTRUMENT := $(realpath $(PYTHONCHEF))/instrument/build/ChefInstrument/Che
 
 VIRTUALENV := virtualenv-1.10.1
 
+CC := clang
+CXX := clang++
+CFLAGS := -march=i586 -Xclang -load -Xclang $(CHEF_INSTRUMENT)
+
 .PHONY: all env clean
 
 all: env
@@ -55,7 +59,7 @@ PYTHON_BUILDS := python-opt0-none/python python-opt4-all/python
 
 python-opt0-none/Makefile:
 	mkdir -p python-opt0-none
-	cd python-opt0-none && ../$(PYTHONSRC)/configure CC="clang" CXX="clang++" CFLAGS="-Xclang -load -Xclang $(CHEF_INSTRUMENT)" \
+	cd python-opt0-none && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
            --with-system-ffi \
 	   --enable-symbex \
 	   --enable-symbex-opt=none \
@@ -63,7 +67,7 @@ python-opt0-none/Makefile:
 
 python-opt1-concrbuff/Makefile:
 	mkdir -p python-opt1-concrbuff
-	cd python-opt1-concrbuff && ../$(PYTHONSRC)/configure CC="clang" CXX="clang++" CFLAGS="-Xclang -load -Xclang $(CHEF_INSTRUMENT)" \
+	cd python-opt1-concrbuff && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
            --with-system-ffi \
 	   --enable-symbex \
 	   --enable-symbex-opt=concrbuff \
@@ -71,7 +75,7 @@ python-opt1-concrbuff/Makefile:
 
 python-opt2-intern/Makefile:
 	mkdir -p python-opt2-intern
-	cd python-opt2-intern && ../$(PYTHONSRC)/configure CC="clang" CXX="clang++" CFLAGS="-Xclang -load -Xclang $(CHEF_INSTRUMENT)" \
+	cd python-opt2-intern && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
            --with-system-ffi \
 	   --enable-symbex \
 	   --enable-symbex-opt=concrbuff,intern \
@@ -79,7 +83,7 @@ python-opt2-intern/Makefile:
 
 python-opt3-hashes/Makefile:
 	mkdir -p python-opt3-hashes
-	cd python-opt3-hashes && ../$(PYTHONSRC)/configure CC="clang" CXX="clang++" CFLAGS="-Xclang -load -Xclang $(CHEF_INSTRUMENT)" \
+	cd python-opt3-hashes && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
            --with-system-ffi \
 	   --enable-symbex \
 	   --enable-symbex-opt=concrbuff,intern,hashes \
@@ -87,7 +91,7 @@ python-opt3-hashes/Makefile:
 
 python-opt4-all/Makefile:
 	mkdir -p python-opt4-all
-	cd python-opt4-all && ../$(PYTHONSRC)/configure CC="clang" CXX="clang++" CFLAGS="-Xclang -load -Xclang $(CHEF_INSTRUMENT)" \
+	cd python-opt4-all && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
            --with-system-ffi \
 	   --enable-symbex \
 	   --enable-symbex-opt=all \
