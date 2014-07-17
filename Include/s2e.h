@@ -81,9 +81,10 @@ static inline void __s2e_touch_string(volatile const char *string)
 static inline void __s2e_touch_buffer(volatile char *buffer, unsigned size)
 {
     unsigned i;
+    char sink;
     volatile const char *b = (volatile const char *) buffer;
     for (i = 0; i < size; ++i) {
-        *b; ++b;
+        sink = *b; ++b;
     }
 }
 
