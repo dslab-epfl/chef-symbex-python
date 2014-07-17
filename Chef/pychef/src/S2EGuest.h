@@ -39,6 +39,8 @@ public:
 	virtual void GetExample(void *buf, int size);
 	virtual int InvokePlugin(const char *pluginName, void *data,
 			uint32_t dataSize);
+	virtual int SystemCall(const char *pluginName, uint32_t id, void *data,
+	        uint32_t dataSize);
 	virtual void KillState(int status, const char *message);
 	virtual void MakeConcolic(void *buf, int size, const char *name);
 	virtual void MakeSymbolic(void *buf, int size, const char *name);

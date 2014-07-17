@@ -25,47 +25,17 @@
 #include "S2EGuest.h"
 
 #include <Python.h>
+#include <symbex.h>
 
 #include <cassert>
 #include <string>
 
 
 #define S2E_CONCOLIC_PLUGIN        "ConcolicSession"
-#define MIN_BUFFER_SIZE            4096
 
 namespace {
 
 using namespace chef;
-
-typedef enum {
-	CONCOLIC_RET_OK,
-	CONCOLIC_RET_TOO_SMALL,
-	CONCOLIC_RET_ERROR
-} ConcolicStatus;
-
-
-typedef enum {
-	START_CONCOLIC_SESSION,
-	END_CONCOLIC_SESSION,
-	LOG_MESSAGE
-} ConcolicCommand;
-
-
-typedef struct {
-	ConcolicCommand command;
-	uint32_t max_time;
-	uint8_t is_error_path;
-	uint32_t arg_ptr;
-	uint32_t arg_size;
-} __attribute__((packed)) ConcolicMessage;
-
-
-
-int Communicate(S2EGuest *s2e_guest, const ConcolicMessage &message) {
-
-	return s2e_guest->InvokePlugin(S2E_CONCOLIC_PLUGIN,
-			(void*)&message, sizeof(message));
-}
 
 
 void DecodeArrayName(const std::string &name, std::string &assgn_key,
@@ -401,28 +371,18 @@ PyObject *ConcolicSession::MakeConcolicTuple(PyObject *target,
 
 int ConcolicSession::StartConcolicSession(bool stop_on_error,
 		uint32_t max_time, bool use_random_select) {
-        ConcolicMessage message;
-	message.command = START_CONCOLIC_SESSION;
-	message.max_time = max_time;
-
-	return Communicate(s2e_guest_, message);
+    return s2e_guest_->SystemCall(S2E_CONCOLIC_PLUGIN,
+            ::START_CONCOLIC_SESSION, NULL, 0);
 }
 
 int ConcolicSession::EndConcolicSession(bool is_error_path) {
-        ConcolicMessage message;
-	message.command = END_CONCOLIC_SESSION;
-	message.is_error_path = is_error_path;
-
-	return Communicate(s2e_guest_, message);
+    return s2e_guest_->SystemCall(S2E_CONCOLIC_PLUGIN,
+            ::END_CONCOLIC_SESSION, NULL, 0);
 }
 
 int ConcolicSession::LogMessage(const char *log_msg, Py_ssize_t size) {
-        ConcolicMessage message;
-	message.command = LOG_MESSAGE;
-	message.arg_ptr = (uintptr_t)log_msg;
-	message.arg_size = (uint32_t)size;
-
-	return Communicate(s2e_guest_, message);
+    return s2e_guest_->SystemCall(S2E_CONCOLIC_PLUGIN,
+            ::LOG_MESSAGE, (void*)log_msg, (uint32_t)size);
 }
 
 } /* namespace chef */

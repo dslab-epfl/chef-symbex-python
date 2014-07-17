@@ -47,6 +47,11 @@ int S2EGuest::InvokePlugin(const char *pluginName, void *data,
 	return s2e_invoke_plugin(pluginName, data, dataSize);
 }
 
+int S2EGuest::SystemCall(const char *pluginName, uint32_t id, void *data,
+        uint32_t dataSize) {
+    return s2e_system_call(pluginName, id, data, dataSize);
+}
+
 void S2EGuest::KillState(int status, const char *message) {
 	s2e_kill_state(status, message);
 }
