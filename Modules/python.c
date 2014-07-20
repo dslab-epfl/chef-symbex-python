@@ -42,7 +42,7 @@ void chef_bb(int bb) {
         return;
     }
 
-    s2e_system_call("ConcolicSession", BASIC_BLOCK, NULL, (uint32_t)bb);
+    s2e_system_call_concrete("ConcolicSession", BASIC_BLOCK, NULL, (uint32_t)bb);
 }
 
 #else

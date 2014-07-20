@@ -760,7 +760,7 @@ static inline int s2e_system_call_concrete(const char *pluginName,
         __s2e_touch_buffer((char*)data, dataSize);
     }
 
-    return __raw_invoke_plugin(pluginName, &syscall, sizeof(syscall));
+    return __raw_invoke_plugin_concrete(pluginName, &syscall, sizeof(syscall));
 }
 
 #endif /* _S2E_H */
