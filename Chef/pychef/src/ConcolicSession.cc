@@ -25,7 +25,21 @@
 #include "S2EGuest.h"
 
 #include <Python.h>
+
+#ifdef SYMBEX_INSTRUMENTATION
 #include <symbex.h>
+#else
+typedef enum {
+    START_CONCOLIC_SESSION,
+    END_CONCOLIC_SESSION,
+    LOG_MESSAGE,
+    MERGE_BARRIER,
+    FUNCTION_BEGIN,
+    FUNCTION_END,
+    BASIC_BLOCK,
+    FINE_GRAINED_TRACE
+} ConcolicCommand;
+#endif
 
 #include <cassert>
 #include <string>

@@ -22,7 +22,12 @@
 
 #include "S2EGuest.h"
 #include "Python.h"
-#include "s2e.h"
+
+#ifdef SYMBEX_INSTRUMENTATION
+#include <symbex.h>
+#else
+#include "s2e/s2e.h"
+#endif
 
 namespace chef {
 
