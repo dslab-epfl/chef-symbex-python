@@ -37,7 +37,7 @@ VIRTUALENV := virtualenv-1.10.1
 
 CC := clang
 CXX := clang++
-CFLAGS := -march=i586
+CFLAGS := -march=i586 $(CFLAGS_INSTRUMENT)
 
 .PHONY: all env clean
 
