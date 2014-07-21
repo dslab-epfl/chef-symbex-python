@@ -31,12 +31,13 @@ PYTHONSRC := $(PYTHONCHEF)/..
 PYTHONBIN_PREFIX := $(realpath .)/python-bin
 
 CHEF_INSTRUMENT := $(realpath $(PYTHONCHEF))/instrument/build/ChefInstrument/ChefInstrument.so
+CFLAGS_INSTRUMENT := -Xclang -load -Xclang $(CHEF_INSTRUMENT)
 
 VIRTUALENV := virtualenv-1.10.1
 
 CC := clang
 CXX := clang++
-CFLAGS := -march=i586 -Xclang -load -Xclang $(CHEF_INSTRUMENT)
+CFLAGS := -march=i586
 
 .PHONY: all env clean
 
