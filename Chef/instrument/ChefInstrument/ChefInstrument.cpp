@@ -52,13 +52,33 @@ struct ChefInstrument : public ModulePass {
         for (Module::iterator I = M.begin(), IE = M.end(); I != IE; ++I) {
             Function &F = *I;
 
-            if (F.empty() || &F == FnChefBegin || &F == FnChefEnd || &F == FnChefBB) {
+            if (!mayInstrument(F))
                 continue;
-            }
 
             instrumentBasicBlocks(M, F);
             instrumentFunction(M, F);
         }
+        return true;
+    }
+
+    bool mayInstrument(Function &F) {
+        if (F.empty())
+            return false;
+
+        if (&F == FnChefBegin || &F == FnChefEnd || &F == FnChefBB)
+            return false;
+
+        // XXX: Most of the S2E intrinsics are inlined.
+        // We should find a more generic way of determining redundant BB
+        // annotations (i.e., code regions that may never fork)
+#if 0
+        if (F.getName().startswith_lower("s2e_"))
+            return false;
+
+        if (F.getName().startswith_lower("__s2e"))
+            return false;
+#endif
+
         return true;
     }
 
