@@ -153,8 +153,6 @@ static PyObject * special_lookup(PyObject *, char *, PyObject **);
 #ifdef _SYMBEX_INSTRUMENT
 
 extern void chef_set_enabled(int enabled);
-
-static void merge_barrier(void);
 static int report_trace(PyFrameObject *frame, uint32_t op_code);
 
 // {Is branch, may throw, is call}
@@ -1264,7 +1262,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 #ifdef _SYMBEX_INSTRUMENT
         if (Py_EnableS2EFlag) {
         	report_trace(f, opcode);
-        	merge_barrier();
         }
 #endif /* _SYMBEX_INSTRUMENT */
 
@@ -3478,38 +3475,24 @@ kwd_as_string(PyObject *kwd) {
 
 #ifdef _SYMBEX_INSTRUMENT
 static int report_trace(PyFrameObject *frame, uint32_t op_code) {
-	static TraceUpdate trace_update;
 	static int monitor_disabled = 0;
 
-	trace_update.op_code = op_code;
-	trace_update.op_attr = _SYMBEX_OPCODE_ATTR(op_code);
+	if (monitor_disabled)
+	    return -1;
 
-	trace_update.frame_count = _SYMBEX_TRACE_SIZE;
-	trace_update.frames[0] = (uint32_t)frame->f_lasti;
-	trace_update.frames[1] = (uintptr_t)frame;
+	uint32_t hlpc[2];
+	hlpc[0] = (uint32_t)frame->f_lasti;
+	hlpc[1] = (uintptr_t)frame;
 
-	if (monitor_disabled) {
-		return -1;
+	int result = __chef_hlpc(op_code, hlpc, sizeof(hlpc));
+	if (result < 0) {
+	    monitor_disabled = 1;
+	    chef_set_enabled(0);
+	    return -1;
 	}
 
-	if (s2e_invoke_plugin("InterpreterMonitor", (void*)&trace_update,
-			sizeof(TraceUpdate)) != 0) {
-		monitor_disabled = 1;
-		chef_set_enabled(0);
-		return -1;
-	}
-
+	chef_set_enabled(result);
 	return 0;
-}
-
-
-static void merge_barrier(void) {
-    volatile int fine_grained_trace = 0;
-
-    s2e_system_call_concrete("ConcolicSession", MERGE_BARRIER, NULL, 0);
-    s2e_system_call("ConcolicSession", FINE_GRAINED_TRACE,
-            &fine_grained_trace, sizeof(fine_grained_trace));
-    chef_set_enabled(fine_grained_trace);
 }
 #endif
 

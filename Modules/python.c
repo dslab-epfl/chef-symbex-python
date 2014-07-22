@@ -26,8 +26,7 @@ void chef_fn_begin(const char *fn_name, int size) {
         return;
     }
 
-    // s2e_system_call("ConcolicSession", FUNCTION_BEGIN, (void*)fn_name, size);
-    s2e_system_call("ConcolicSession", FUNCTION_BEGIN, NULL, 0);
+    __chef_fn_begin();
 }
 
 void chef_fn_end(const char *fn_name, int size) {
@@ -35,8 +34,7 @@ void chef_fn_end(const char *fn_name, int size) {
         return;
     }
 
-    s2e_system_call("ConcolicSession", FUNCTION_END, NULL, 0);
-    // s2e_system_call("ConcolicSession", FUNCTION_END, (void*)fn_name, size);
+    __chef_fn_end();
 }
 
 void chef_bb(int bb) {
@@ -44,7 +42,7 @@ void chef_bb(int bb) {
         return;
     }
 
-    s2e_system_call_concrete("ConcolicSession", BASIC_BLOCK, NULL, (uint32_t)bb);
+    __chef_bb(bb);
 }
 
 #else

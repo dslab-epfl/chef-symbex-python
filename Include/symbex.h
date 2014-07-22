@@ -86,12 +86,7 @@ typedef struct {
 typedef enum {
     START_CONCOLIC_SESSION,
     END_CONCOLIC_SESSION,
-    LOG_MESSAGE,
-    MERGE_BARRIER,
-    FUNCTION_BEGIN,
-    FUNCTION_END,
-    BASIC_BLOCK,
-    FINE_GRAINED_TRACE
+    LOG_MESSAGE
 } ConcolicCommand;
 
 
