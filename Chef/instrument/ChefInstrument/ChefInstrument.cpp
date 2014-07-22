@@ -21,6 +21,11 @@
 using namespace llvm;
 
 
+static const char *kChefFnBegin = "chef_fn_begin";
+static const char *kChefFnEnd = "chef_fn_end";
+static const char *kChefBasicBlock = "chef_bb";
+
+
 namespace {
 
 struct ChefInstrument : public ModulePass {
@@ -45,9 +50,9 @@ struct ChefInstrument : public ModulePass {
         FunctionType *BBInstrumentType = TypeBuilder<void (types::i<32>),
                 true>::get(M.getContext());
 
-        FnChefBegin = M.getOrInsertFunction("chef_fn_begin", FnInstrumentType);
-        FnChefEnd = M.getOrInsertFunction("chef_fn_end", FnInstrumentType);
-        FnChefBB = M.getOrInsertFunction("chef_bb", BBInstrumentType);
+        FnChefBegin = M.getOrInsertFunction(kChefFnBegin, FnInstrumentType);
+        FnChefEnd = M.getOrInsertFunction(kChefFnEnd, FnInstrumentType);
+        FnChefBB = M.getOrInsertFunction(kChefBasicBlock, BBInstrumentType);
 
         for (Module::iterator I = M.begin(), IE = M.end(); I != IE; ++I) {
             Function &F = *I;
