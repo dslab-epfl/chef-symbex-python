@@ -3480,11 +3480,11 @@ static int report_trace(PyFrameObject *frame, uint32_t op_code) {
 	if (monitor_disabled)
 	    return -1;
 
-	uint32_t hlpc[2];
+	static uint32_t hlpc[2] = { 0, 0 };
 	hlpc[0] = (uint32_t)frame->f_lasti;
 	hlpc[1] = (uintptr_t)frame;
 
-	int result = __chef_hlpc(op_code, hlpc, sizeof(hlpc));
+	int result = __chef_hlpc(op_code, hlpc, sizeof(hlpc)/sizeof(hlpc[0]));
 	if (result < 0) {
 	    monitor_disabled = 1;
 	    chef_set_enabled(0);
