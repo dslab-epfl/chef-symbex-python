@@ -795,9 +795,20 @@ static inline void __chef_fn_end(const char *fnName, uint32_t fnNameLen) {
     );
 }
 
+
 static inline void __chef_bb(uintptr_t bb) {
     __asm__ __volatile__(
         S2E_CONCRETE_PROLOGUE
+
+/* We don't use registers A and D, so make sure they're not symbolic... */
+#ifdef __x86_64__
+        "xor %%rax, %%rax\n"
+        "xor %%rdx, %%rdx\n"
+#else
+        "xor %%eax, %%eax\n"
+        "xor %%edx, %%edx\n"
+#endif
+
         S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
 
         "jmp __sip1\n" /* Force concrete mode */
@@ -806,9 +817,15 @@ static inline void __chef_bb(uintptr_t bb) {
         S2E_INSTRUCTION_COMPLEX(BB, 02)
         S2E_CONCRETE_EPILOGUE
 
-        : : "c" (bb) : "memory"
+        : : "c" (bb) :
+#ifdef __x86_64__
+        "%rax", "%rdx"
+#else
+        "%eax", "%edx"
+#endif
     );
 }
+
 
 static inline int __chef_hlpc(uint32_t opcode, uint32_t *hlpc,
         uint32_t hlpcLen) {
