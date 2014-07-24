@@ -42,6 +42,7 @@ static char copyright[] =
 #define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
+#include "symbex.h"
 #include "structmember.h" /* offsetof */
 
 #include "sre.h"
@@ -110,6 +111,23 @@ static char copyright[] =
 /* -------------------------------------------------------------------- */
 /* search engine state */
 
+#ifdef SYMBEX_INSTRUMENTATION
+#define SRE_IS_DIGIT(ch) \
+    ((ch) >= '0' && (ch) <= '9')
+#define SRE_IS_SPACE(ch) \
+    ((ch) == 32 || ((ch) >= 9 && (ch) <= 13))
+#define SRE_IS_LINEBREAK(ch) \
+    ((ch) == 10)
+#define SRE_IS_ALNUM(ch) \
+    (((ch) >= '0' && (ch) <= '9') || ((ch) >= 'A' && (ch) <= 'Z') || ((ch) >= 'a' && (ch) <= 'z'))
+#define SRE_IS_WORD(ch) \
+    ((ch) == '_' || SRE_IS_ALNUM(ch))
+
+static unsigned int sre_lower(unsigned int ch)
+{
+    return (ch >= 'A' && ch <= 'Z') ? (ch + ('a' - 'A')) : ch;
+}
+#else
 /* default character predicates (run sre_chars.py to regenerate tables) */
 
 #define SRE_DIGIT_MASK 1
@@ -153,6 +171,7 @@ static unsigned int sre_lower(unsigned int ch)
 {
     return ((ch) < 128 ? (unsigned int)sre_char_lower[ch] : ch);
 }
+#endif /* SYMBEX_INSTRUMENTATION */
 
 /* locale-specific character predicates */
 /* !(c & ~N) == (c < N+1) for any unsigned c, this avoids
