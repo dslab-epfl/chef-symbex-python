@@ -802,9 +802,15 @@ static inline void __chef_bb(uintptr_t bb) {
 
 /* We don't use registers A and D, so make sure they're not symbolic... */
 #ifdef __x86_64__
+        "push %%rax\n"
+        "push %%rdx\n"
+
         "xor %%rax, %%rax\n"
         "xor %%rdx, %%rdx\n"
 #else
+        "push %%eax\n"
+        "push %%edx\n"
+
         "xor %%eax, %%eax\n"
         "xor %%edx, %%edx\n"
 #endif
@@ -815,14 +821,18 @@ static inline void __chef_bb(uintptr_t bb) {
         "__sip1:\n"
 
         S2E_INSTRUCTION_COMPLEX(BB, 02)
+
+#ifdef __x86_64__
+        "pop %%rdx\n"
+        "pop %%rax\n"
+#else
+        "pop %%edx\n"
+        "pop %%eax\n"
+#endif
+
         S2E_CONCRETE_EPILOGUE
 
-        : : "c" (bb) :
-#ifdef __x86_64__
-        "%rax", "%rdx"
-#else
-        "%eax", "%edx"
-#endif
+        : : "c" (bb)
     );
 }
 
