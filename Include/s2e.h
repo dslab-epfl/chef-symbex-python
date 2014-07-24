@@ -140,7 +140,9 @@ static inline void __s2e_touch_string(volatile const char *string)
 static inline void __s2e_touch_buffer(volatile char *buffer, unsigned size)
 {
     unsigned i;
+#ifdef __clang__
     char sink;
+#endif
     volatile const char *b = (volatile const char *) buffer;
     for (i = 0; i < size; i += sizeof(uintptr_t)) {
 #ifdef __clang__
