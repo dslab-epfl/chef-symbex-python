@@ -806,7 +806,7 @@ static inline void __chef_bb(uintptr_t bb) {
         S2E_INSTRUCTION_COMPLEX(BB, 02)
         S2E_CONCRETE_EPILOGUE
 
-        : : "c" (bb)
+        : : "c" (bb) : "memory"
     );
 }
 
