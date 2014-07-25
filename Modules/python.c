@@ -7,8 +7,8 @@
 #include <floatingpoint.h>
 #endif
 
-extern void chef_fn_begin(const char *, int);
-extern void chef_fn_end(const char *, int);
+extern void chef_fn_begin(const char *, int, int);
+extern void chef_fn_end(void);
 extern void chef_bb(int);
 
 #ifdef SYMBEX_INSTRUMENTATION
@@ -22,26 +22,23 @@ void chef_set_enabled(int enabled) {
     enable_state = enabled;
 }
 
-void chef_fn_begin(const char *fn_name, int size) {
+void chef_fn_begin(const char *fn_name, int size, int bb_count) {
     if (!enable_state) {
         return;
     }
 
     if (report_fn_names)
-        __chef_fn_begin(fn_name, size);
+        __chef_fn_begin(fn_name, size, bb_count);
     else
-        __chef_fn_begin(NULL, 0);
+        __chef_fn_begin(NULL, 0, bb_count);
 }
 
-void chef_fn_end(const char *fn_name, int size) {
+void chef_fn_end(void) {
     if (!enable_state) {
         return;
     }
 
-    if (report_fn_names)
-        __chef_fn_end(fn_name, size);
-    else
-        __chef_fn_end(NULL, 0);
+    __chef_fn_end();
 }
 
 void chef_bb(int bb) {
@@ -54,11 +51,11 @@ void chef_bb(int bb) {
 
 #else
 
-void chef_fn_begin(const char *fn_name, int size) {
+void chef_fn_begin(const char *fn_name, int size, int bb_count) {
 
 }
 
-void chef_fn_end(const char *fn_name, int size) {
+void chef_fn_end(void) {
 
 }
 

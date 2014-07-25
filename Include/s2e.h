@@ -777,28 +777,25 @@ static inline int s2e_system_call_concrete(const char *pluginName,
 
 /* Chef support */
 
-static inline void __chef_fn_begin(const char *fnName, uint32_t fnNameLen) {
+static inline void __chef_fn_begin(const char *fnName, uint32_t fnNameLen,
+        uint32_t bbCount) {
     if (fnName) {
         __s2e_touch_buffer((char*)fnName, fnNameLen);
     }
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(BB, 00)
-        : : "c" (fnName), "a" (fnNameLen)
+        : : "c" (fnName), "a" (fnNameLen), "d" (bbCount)
     );
 }
 
-static inline void __chef_fn_end(const char *fnName, uint32_t fnNameLen) {
-    if (fnName) {
-        __s2e_touch_buffer((char*)fnName, fnNameLen);
-    }
+static inline void __chef_fn_end(void) {
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(BB, 01)
-        : : "c" (fnName), "a" (fnNameLen)
     );
 }
 
 
-static inline void __chef_bb(uintptr_t bb) {
+static inline void __chef_bb(uint32_t bb) {
     __asm__ __volatile__(
         S2E_CONCRETE_PROLOGUE
 

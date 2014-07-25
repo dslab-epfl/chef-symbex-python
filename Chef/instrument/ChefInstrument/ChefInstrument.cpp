@@ -46,12 +46,13 @@ struct ChefInstrument : public ModulePass {
 
     virtual bool runOnModule(Module &M) {
         FunctionType *FnInstrumentType = TypeBuilder<void (types::i<8>*,
-                types::i<32>), true>::get(M.getContext());
+                types::i<32>, types::i<32>), true>::get(M.getContext());
+        FunctionType *FnEndType = TypeBuilder<void (), true>::get(M.getContext());
         FunctionType *BBInstrumentType = TypeBuilder<void (types::i<32>),
                 true>::get(M.getContext());
 
         FnChefBegin = M.getOrInsertFunction(kChefFnBegin, FnInstrumentType);
-        FnChefEnd = M.getOrInsertFunction(kChefFnEnd, FnInstrumentType);
+        FnChefEnd = M.getOrInsertFunction(kChefFnEnd, FnEndType);
         FnChefBB = M.getOrInsertFunction(kChefBasicBlock, BBInstrumentType);
 
         for (Module::iterator I = M.begin(), IE = M.end(); I != IE; ++I) {
@@ -60,8 +61,8 @@ struct ChefInstrument : public ModulePass {
             if (!mayInstrument(F))
                 continue;
 
-            instrumentBasicBlocks(M, F);
-            instrumentFunction(M, F);
+            int BBCount = instrumentBasicBlocks(M, F);
+            instrumentFunction(M, F, BBCount);
         }
         return true;
     }
@@ -102,35 +103,39 @@ struct ChefInstrument : public ModulePass {
         return ConstantExpr::getGetElementPtr(FnNameGVar, GEPIndices);
     }
 
-    void instrumentFunction(Module &M, Function &F) {
-        std::vector<Value*> fn_args;
-        fn_args.push_back(getFnNameSymbol(M, F));
-        fn_args.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()),
-                F.getName().size()));
-
-
+    void instrumentFunction(Module &M, Function &F, int BBCount) {
         UnifyFunctionExitNodes &UFEN = getAnalysis<UnifyFunctionExitNodes>(F);
 
-        CallInst::Create(FnChefBegin, fn_args, "",
+        std::vector<Value*> FnBeginArgs;
+        FnBeginArgs.push_back(getFnNameSymbol(M, F));
+        FnBeginArgs.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()),
+                F.getName().size()));
+        FnBeginArgs.push_back(ConstantInt::get(Type::getInt32Ty(F.getContext()),
+                BBCount));
+
+        CallInst::Create(FnChefBegin, FnBeginArgs, "",
                 F.getEntryBlock().getFirstNonPHI());
 
         if (UFEN.getReturnBlock()) {
-            CallInst::Create(FnChefEnd, fn_args, "",
+            CallInst::Create(FnChefEnd, "",
                     UFEN.getReturnBlock()->getTerminator());
         }
     }
 
-    void instrumentBasicBlocks(Module &M, Function &F) {
+    int instrumentBasicBlocks(Module &M, Function &F) {
         ReversePostOrderTraversal<Function*> RPOT(&F);
 
         int Counter = 0;
         for (ReversePostOrderTraversal<Function*>::rpo_iterator it = RPOT.begin(),
                 ie = RPOT.end(); it != ie; ++it) {
             BasicBlock *bb = *it;
-            CallInst::Create(FnChefBB, ConstantInt::get(Type::getInt32Ty(F.getContext()), Counter),
+            CallInst::Create(FnChefBB,
+                    ConstantInt::get(Type::getInt32Ty(F.getContext()), Counter),
                     "", bb->getFirstNonPHI());
             Counter++;
         }
+
+        return Counter;
     }
 
 private:
