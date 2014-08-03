@@ -21,17 +21,22 @@
  */
 
 #include <Python.h>
+#include <frameobject.h>
 
 #include "ConcolicSession.h"
 #include "S2EGuest.h"
 #include "SymbolicUtils.h"
 
+#ifdef SYMBEX_INSTRUMENTATION
+#include <symbex.h>
+#else
+#include "s2e/s2e.h"
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 
 using namespace chef;
-
-#define DEFAULT_MAX_FORKS        1000
 
 #define DEFAULT_MIN_SEQ_SIZE        0
 #define DEFAULT_MAX_SEQ_SIZE     (-1)
@@ -46,6 +51,47 @@ static PyObject *SymbexError;
 static S2EGuest *s2e_guest;
 static ConcolicSession *concolic_session;
 static SymbolicUtils *symbolic_utils;
+
+
+/*== Trace handler ===========================================================*/
+
+static int trace_func(PyObject *obj, PyFrameObject *frame, int what,
+        PyObject *arg) {
+    hl_frame_t chef_frame = {0};
+    chef_frame.last_inst = frame->f_lasti;
+    chef_frame.line_no = frame->f_lineno;
+    if (what != PyTrace_LINE) {
+        chef_frame.fn_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_name);
+        chef_frame.file_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_filename);
+    }
+
+    switch (what) {
+    case PyTrace_CALL:
+        __chef_hl_trace(CHEF_TRACE_CALL, &chef_frame);
+        break;
+    case PyTrace_EXCEPTION:
+        __chef_hl_trace(CHEF_TRACE_EXCEPTION, &chef_frame);
+        break;
+    case PyTrace_LINE:
+        __chef_hl_trace(CHEF_TRACE_LINE, &chef_frame);
+        break;
+    case PyTrace_RETURN:
+        __chef_hl_trace(CHEF_TRACE_RETURN, &chef_frame);
+        break;
+    case PyTrace_C_CALL:
+        __chef_hl_trace(CHEF_TRACE_C_CALL, &chef_frame);
+        break;
+    case PyTrace_C_EXCEPTION:
+        __chef_hl_trace(CHEF_TRACE_C_EXCEPTION, &chef_frame);
+        break;
+    case PyTrace_C_RETURN:
+        __chef_hl_trace(CHEF_TRACE_C_RETURN, &chef_frame);
+        break;
+    default:
+        break;
+    }
+    return 0;
+}
 
 
 /*== High-level functions ====================================================*/
@@ -164,8 +210,7 @@ symbex_killstate(PyObject *self, PyObject *args) {
 
   symbolic_utils->KillState(status, message);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -198,6 +243,8 @@ symbex_startconcolic(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
+	PyEval_SetTrace(&trace_func, NULL);
+
 	Py_RETURN_NONE;
 }
 
@@ -219,6 +266,8 @@ symbex_endconcolic(PyObject *self, PyObject *args) {
 		PyErr_SetString(SymbexError, "Could not terminate concolic session");
 		return NULL;
 	}
+
+	PyEval_SetTrace(NULL, NULL);
 
 	Py_RETURN_NONE;
 }
@@ -297,27 +346,6 @@ symbex_assumeascii(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-
-/*----------------------------------------------------------------------------*/
-#if 0
-PyDoc_STRVAR(symbex_decodetc_doc,
-"decodetc(str) \n\
-\n\
-Decode a set of test cases represented as a protobuf message");
-
-static PyObject *
-symbex_decodetc(PyObject *self, PyObject *args) {
-	const char *test_cases;
-	int length;
-
-	if (!PyArg_ParseTuple(args, "s#:decodetc", &test_cases, &length)) {
-		return NULL;
-	}
-
-	return concolic_session->DecodeTestCases(test_cases, length);
-}
-#endif
-
 /*----------------------------------------------------------------------------*/
 
 PyDoc_STRVAR(symbex_log_doc,
@@ -362,10 +390,6 @@ static PyMethodDef SymbexMethods[] = {
 
 	{ "assume", symbex_assume, METH_VARARGS, symbex_assume_doc },
 	{ "assumeascii", symbex_assumeascii, METH_VARARGS, symbex_assumeascii_doc },
-
-#if 0
-	{ "decodetc", symbex_decodetc, METH_VARARGS, symbex_decodetc_doc },
-#endif
 	{ "log", symbex_log, METH_VARARGS, symbex_log_doc },
 	{ NULL, NULL, 0, NULL } /* Sentinel */
 };

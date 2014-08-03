@@ -63,6 +63,65 @@
         "popl %%ebx\n"
 #endif
 
+#ifdef __x86_64__
+#define S2E_CONCRETE_PROLOGUE \
+        "push %%rbx\n"        \
+        "push %%rsi\n"        \
+        "push %%rdi\n"        \
+        "push %%rbp\n"        \
+        "push %%r8\n"         \
+        "push %%r9\n"         \
+        "push %%r10\n"        \
+        "push %%r11\n"        \
+        "push %%r12\n"        \
+        "push %%r13\n"        \
+        "push %%r14\n"        \
+        "push %%r15\n"        \
+                              \
+        "xor  %%rbx, %%rbx\n" \
+        "xor  %%rsi, %%rsi\n" \
+        "xor  %%rdi, %%rdi\n" \
+        "xor  %%rbp, %%rbp\n" \
+        "xor  %%r8, %%r8\n"   \
+        "xor  %%r9, %%r9\n"   \
+        "xor  %%r10, %%r10\n" \
+        "xor  %%r11, %%r11\n" \
+        "xor  %%r12, %%r12\n" \
+        "xor  %%r13, %%r13\n" \
+        "xor  %%r14, %%r14\n" \
+        "xor  %%r15, %%r15\n"
+
+#define S2E_CONCRETE_EPILOGUE \
+        "pop %%r15\n"         \
+        "pop %%r14\n"         \
+        "pop %%r13\n"         \
+        "pop %%r12\n"         \
+        "pop %%r11\n"         \
+        "pop %%r10\n"         \
+        "pop %%r9\n"          \
+        "pop %%r8\n"          \
+        "pop %%rbp\n"         \
+        "pop %%rdi\n"         \
+        "pop %%rsi\n"         \
+        "pop %%rbx\n"
+#else
+#define S2E_CONCRETE_PROLOGUE \
+        "push %%ebx\n"        \
+        "push %%ebp\n"        \
+        "push %%esi\n"        \
+        "push %%edi\n"        \
+        "xor %%ebx, %%ebx\n"  \
+        "xor %%ebp, %%ebp\n"  \
+        "xor %%esi, %%esi\n"  \
+        "xor %%edi, %%edi\n"
+
+#define S2E_CONCRETE_EPILOGUE \
+        "pop %%edi\n"         \
+        "pop %%esi\n"         \
+        "pop %%ebp\n"         \
+        "pop %%ebx\n"
+#endif
+
 #define S2E_INSTRUCTION_REGISTERS_SIMPLE(val)           \
     S2E_INSTRUCTION_REGISTERS_COMPLEX(val, 00)
 
@@ -79,10 +138,16 @@ static inline void __s2e_touch_string(volatile const char *string)
 static inline void __s2e_touch_buffer(volatile char *buffer, unsigned size)
 {
     unsigned i;
+#ifdef __clang__
     char sink;
+#endif
     volatile const char *b = (volatile const char *) buffer;
-    for (i = 0; i < size; ++i) {
+    for (i = 0; i < size; i += sizeof(uintptr_t)) {
+#ifdef __clang__
         sink = *b; ++b;
+#else
+        *b; ++b;
+#endif
     }
 }
 
@@ -575,69 +640,14 @@ static inline int __raw_invoke_plugin_concrete(const char *pluginName, void *dat
     int result;
 
     __asm__ __volatile__(
-        #ifdef __x86_64__
-        "push %%rbx\n"
-        "push %%rsi\n"
-        "push %%rdi\n"
-        "push %%rbp\n"
-        "push %%r8\n"
-        "push %%r9\n"
-        "push %%r10\n"
-        "push %%r11\n"
-        "push %%r12\n"
-        "push %%r13\n"
-        "push %%r14\n"
-        "push %%r15\n"
-
-        "xor  %%rbx, %%rbx\n"
-        "xor  %%rsi, %%rsi\n"
-        "xor  %%rdi, %%rdi\n"
-        "xor  %%rbp, %%rbp\n"
-        "xor  %%r8, %%r8\n"
-        "xor  %%r9, %%r9\n"
-        "xor  %%r10, %%r10\n"
-        "xor  %%r11, %%r11\n"
-        "xor  %%r12, %%r12\n"
-        "xor  %%r13, %%r13\n"
-        "xor  %%r14, %%r14\n"
-        "xor  %%r15, %%r15\n"
-        #else
-        "push %%ebx\n"
-        "push %%ebp\n"
-        "push %%esi\n"
-        "push %%edi\n"
-        "xor %%ebx, %%ebx\n"
-        "xor %%ebp, %%ebp\n"
-        "xor %%esi, %%esi\n"
-        "xor %%edi, %%edi\n"
-        #endif
-
+        S2E_CONCRETE_PROLOGUE
         S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
 
         "jmp __sip1\n" /* Force concrete mode */
         "__sip1:\n"
 
         S2E_INSTRUCTION_SIMPLE(0B)
-
-#ifdef __x86_64__
-        "pop %%r15\n"
-        "pop %%r14\n"
-        "pop %%r13\n"
-        "pop %%r12\n"
-        "pop %%r11\n"
-        "pop %%r10\n"
-        "pop %%r9\n"
-        "pop %%r8\n"
-        "pop %%rbp\n"
-        "pop %%rdi\n"
-        "pop %%rsi\n"
-        "pop %%rbx\n"
-#else
-        "pop %%edi\n"
-        "pop %%esi\n"
-        "pop %%ebp\n"
-        "pop %%ebx\n"
-#endif
+        S2E_CONCRETE_EPILOGUE
 
             : "=a" (result) : "a" (pluginName), "c" (data), "d" (dataSize) : "memory"
     );
@@ -737,5 +747,125 @@ static inline int s2e_system_call_concrete(const char *pluginName,
 
     return __raw_invoke_plugin_concrete(pluginName, &syscall, sizeof(syscall));
 }
+
+
+/* Chef support */
+
+static inline void __chef_fn_begin(const char *fnName, uint32_t fnNameLen,
+        uint32_t bbCount) {
+    if (fnName) {
+        __s2e_touch_buffer((char*)fnName, fnNameLen);
+    }
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_COMPLEX(BB, 00)
+        : : "c" (fnName), "a" (fnNameLen), "d" (bbCount)
+    );
+}
+
+static inline void __chef_fn_end(void) {
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_COMPLEX(BB, 01)
+    );
+}
+
+
+static inline void __chef_bb(uint32_t bb) {
+    __asm__ __volatile__(
+        S2E_CONCRETE_PROLOGUE
+
+/* We don't use registers A and D, so make sure they're not symbolic... */
+#ifdef __x86_64__
+        "push %%rax\n"
+        "push %%rdx\n"
+
+        "xor %%rax, %%rax\n"
+        "xor %%rdx, %%rdx\n"
+#else
+        "push %%eax\n"
+        "push %%edx\n"
+
+        "xor %%eax, %%eax\n"
+        "xor %%edx, %%edx\n"
+#endif
+
+        S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
+
+        "jmp __sip1\n" /* Force concrete mode */
+        "__sip1:\n"
+
+        S2E_INSTRUCTION_COMPLEX(BB, 02)
+
+#ifdef __x86_64__
+        "pop %%rdx\n"
+        "pop %%rax\n"
+#else
+        "pop %%edx\n"
+        "pop %%eax\n"
+#endif
+
+        S2E_CONCRETE_EPILOGUE
+
+        : : "c" (bb)
+    );
+}
+
+
+static inline int __chef_hlpc(uint32_t opcode, uint32_t *hlpc,
+        uint32_t hlpcLen) {
+    int result = 0;
+
+    __s2e_touch_buffer((char*)hlpc, hlpcLen*sizeof(uint32_t));
+
+    __asm__ __volatile__(
+        S2E_CONCRETE_PROLOGUE
+        S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
+
+        "jmp __sip1\n" /* Force concrete mode */
+        "__sip1:\n"
+
+        S2E_INSTRUCTION_COMPLEX(BB, 03)
+        S2E_CONCRETE_EPILOGUE
+
+        : "=a" (result) : "a" (opcode), "c" (hlpc), "d" (hlpcLen) : "memory"
+    );
+    return result;
+}
+
+
+typedef enum {
+    CHEF_TRACE_CALL = 0,
+    CHEF_TRACE_EXCEPTION = 1,
+    CHEF_TRACE_LINE = 2,
+    CHEF_TRACE_RETURN = 3,
+    CHEF_TRACE_C_CALL = 4,
+    CHEF_TRACE_C_EXCEPTION = 5,
+    CHEF_TRACE_C_RETURN = 6
+} hl_trace_reason;
+
+
+typedef struct {
+    int32_t last_inst;
+    int32_t line_no;
+    uintptr_t fn_name;
+    uintptr_t file_name;
+} __attribute__((packed)) hl_frame_t;
+
+static inline void __chef_hl_trace(hl_trace_reason reason, hl_frame_t *frame) {
+    __s2e_touch_buffer((char*)frame, sizeof(hl_frame_t));
+    if (frame->fn_name) {
+        __s2e_touch_string((char*)frame->fn_name);
+    }
+    if (frame->file_name) {
+        __s2e_touch_string((char*)frame->file_name);
+    }
+
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_COMPLEX(BB, 04)
+
+        : : "c" (reason), "a" (frame)
+    );
+}
+
+
 
 #endif /* _S2E_H */
