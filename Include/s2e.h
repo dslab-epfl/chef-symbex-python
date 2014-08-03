@@ -858,5 +858,40 @@ static inline int __chef_hlpc(uint32_t opcode, uint32_t *hlpc,
 }
 
 
+typedef enum {
+    CHEF_TRACE_CALL = 0,
+    CHEF_TRACE_EXCEPTION = 1,
+    CHEF_TRACE_LINE = 2,
+    CHEF_TRACE_RETURN = 3,
+    CHEF_TRACE_C_CALL = 4,
+    CHEF_TRACE_C_EXCEPTION = 5,
+    CHEF_TRACE_C_RETURN = 6
+} hl_trace_reason;
+
+
+typedef struct {
+    int32_t last_inst;
+    int32_t line_no;
+    uintptr_t fn_name;
+    uintptr_t file_name;
+} __attribute__((packed)) hl_frame_t;
+
+static inline void __chef_hl_trace(hl_trace_reason reason, hl_frame_t *frame) {
+    __s2e_touch_buffer((char*)frame, sizeof(hl_frame_t));
+    if (frame->fn_name) {
+        __s2e_touch_string((char*)frame->fn_name);
+    }
+    if (frame->file_name) {
+        __s2e_touch_string((char*)frame->file_name);
+    }
+
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_COMPLEX(BB, 04)
+
+        : : "c" (reason), "a" (frame)
+    );
+}
+
+
 
 #endif /* _S2E_H */
