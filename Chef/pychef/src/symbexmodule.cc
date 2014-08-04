@@ -67,30 +67,52 @@ static int trace_func(PyObject *obj, PyFrameObject *frame, int what,
 
     switch (what) {
     case PyTrace_CALL:
-        __chef_hl_trace(CHEF_TRACE_CALL, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_CALL, &chef_frame, 1);
         break;
     case PyTrace_EXCEPTION:
-        __chef_hl_trace(CHEF_TRACE_EXCEPTION, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_EXCEPTION, &chef_frame, 1);
         break;
     case PyTrace_LINE:
-        __chef_hl_trace(CHEF_TRACE_LINE, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_LINE, &chef_frame, 1);
         break;
     case PyTrace_RETURN:
-        __chef_hl_trace(CHEF_TRACE_RETURN, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_RETURN, &chef_frame, 1);
         break;
     case PyTrace_C_CALL:
-        __chef_hl_trace(CHEF_TRACE_C_CALL, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_C_CALL, &chef_frame, 1);
         break;
     case PyTrace_C_EXCEPTION:
-        __chef_hl_trace(CHEF_TRACE_C_EXCEPTION, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_C_EXCEPTION, &chef_frame, 1);
         break;
     case PyTrace_C_RETURN:
-        __chef_hl_trace(CHEF_TRACE_C_RETURN, &chef_frame);
+        __chef_hl_trace(CHEF_TRACE_C_RETURN, &chef_frame, 1);
         break;
     default:
         break;
     }
     return 0;
+}
+
+
+static void trace_init(PyFrameObject *frame) {
+    int frame_count = 0;
+    for (PyFrameObject *f = frame; f != NULL; f = f->f_back, ++frame_count);
+
+    hl_frame_t *call_stack = new hl_frame_t[frame_count];
+    hl_frame_t *chef_frame = call_stack;
+
+    while (frame != NULL) {
+        chef_frame->last_inst = frame->f_lasti;
+        chef_frame->line_no = frame->f_lineno;
+        chef_frame->fn_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_name);
+        chef_frame->file_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_filename);
+        frame = frame->f_back;
+        chef_frame++;
+    }
+
+    __chef_hl_trace(CHEF_TRACE_INIT, call_stack, frame_count);
+
+    delete [] call_stack;
 }
 
 
@@ -243,6 +265,8 @@ symbex_startconcolic(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
+	PyThreadState *tstate = PyThreadState_Get();
+	trace_init(tstate->frame);
 	PyEval_SetTrace(&trace_func, NULL);
 
 	Py_RETURN_NONE;
