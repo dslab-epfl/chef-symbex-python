@@ -865,7 +865,8 @@ typedef enum {
     CHEF_TRACE_RETURN = 3,
     CHEF_TRACE_C_CALL = 4,
     CHEF_TRACE_C_EXCEPTION = 5,
-    CHEF_TRACE_C_RETURN = 6
+    CHEF_TRACE_C_RETURN = 6,
+    CHEF_TRACE_INIT = 7
 } hl_trace_reason;
 
 
@@ -876,19 +877,24 @@ typedef struct {
     uintptr_t file_name;
 } __attribute__((packed)) hl_frame_t;
 
-static inline void __chef_hl_trace(hl_trace_reason reason, hl_frame_t *frame) {
-    __s2e_touch_buffer((char*)frame, sizeof(hl_frame_t));
-    if (frame->fn_name) {
-        __s2e_touch_string((char*)frame->fn_name);
-    }
-    if (frame->file_name) {
-        __s2e_touch_string((char*)frame->file_name);
+
+static inline void __chef_hl_trace(hl_trace_reason reason, hl_frame_t *frame,
+        uint32_t frameCount) {
+    __s2e_touch_buffer((char*)frame, frameCount*sizeof(hl_frame_t));
+
+    for (int i = 0; i < frameCount; ++i) {
+        if (frame[i].fn_name) {
+            __s2e_touch_string((char*)frame[i].fn_name);
+        }
+        if (frame[i].file_name) {
+            __s2e_touch_string((char*)frame[i].file_name);
+        }
     }
 
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(BB, 04)
 
-        : : "c" (reason), "a" (frame)
+        : : "c" (reason), "a" (frame), "d" (frameCount)
     );
 }
 
