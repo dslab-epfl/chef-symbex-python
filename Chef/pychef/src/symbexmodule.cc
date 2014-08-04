@@ -58,38 +58,18 @@ static SymbolicUtils *symbolic_utils;
 static int trace_func(PyObject *obj, PyFrameObject *frame, int what,
         PyObject *arg) {
     hl_frame_t chef_frame = {0};
+
+    chef_frame.function = (uintptr_t)PyString_AS_STRING(frame->f_code->co_code);
     chef_frame.last_inst = frame->f_lasti;
     chef_frame.line_no = frame->f_lineno;
-    if (what != PyTrace_LINE) {
+
+    // XXX: Properly handle the C calls
+    if (what == PyTrace_CALL || what == PyTrace_C_CALL) {
         chef_frame.fn_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_name);
         chef_frame.file_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_filename);
     }
 
-    switch (what) {
-    case PyTrace_CALL:
-        __chef_hl_trace(CHEF_TRACE_CALL, &chef_frame, 1);
-        break;
-    case PyTrace_EXCEPTION:
-        __chef_hl_trace(CHEF_TRACE_EXCEPTION, &chef_frame, 1);
-        break;
-    case PyTrace_LINE:
-        __chef_hl_trace(CHEF_TRACE_LINE, &chef_frame, 1);
-        break;
-    case PyTrace_RETURN:
-        __chef_hl_trace(CHEF_TRACE_RETURN, &chef_frame, 1);
-        break;
-    case PyTrace_C_CALL:
-        __chef_hl_trace(CHEF_TRACE_C_CALL, &chef_frame, 1);
-        break;
-    case PyTrace_C_EXCEPTION:
-        __chef_hl_trace(CHEF_TRACE_C_EXCEPTION, &chef_frame, 1);
-        break;
-    case PyTrace_C_RETURN:
-        __chef_hl_trace(CHEF_TRACE_C_RETURN, &chef_frame, 1);
-        break;
-    default:
-        break;
-    }
+    __chef_hl_trace(static_cast<hl_trace_reason>(what), &chef_frame, 1);
     return 0;
 }
 
@@ -102,10 +82,13 @@ static void trace_init(PyFrameObject *frame) {
     hl_frame_t *chef_frame = call_stack;
 
     while (frame != NULL) {
+        chef_frame->function = (uintptr_t)PyString_AS_STRING(frame->f_code->co_code);
         chef_frame->last_inst = frame->f_lasti;
         chef_frame->line_no = frame->f_lineno;
+
         chef_frame->fn_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_name);
         chef_frame->file_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_filename);
+
         frame = frame->f_back;
         chef_frame++;
     }

@@ -845,7 +845,11 @@ typedef enum {
 
 
 typedef struct {
+    /* Identification */
     int32_t last_inst;
+    uintptr_t function;
+
+    /* Debug info */
     int32_t line_no;
     uintptr_t fn_name;
     uintptr_t file_name;
@@ -854,9 +858,10 @@ typedef struct {
 
 static inline void __chef_hl_trace(hl_trace_reason reason, hl_frame_t *frame,
         uint32_t frameCount) {
+    int i;
     __s2e_touch_buffer((char*)frame, frameCount*sizeof(hl_frame_t));
 
-    for (int i = 0; i < frameCount; ++i) {
+    for (i = 0; i < frameCount; ++i) {
         if (frame[i].fn_name) {
             __s2e_touch_string((char*)frame[i].fn_name);
         }
