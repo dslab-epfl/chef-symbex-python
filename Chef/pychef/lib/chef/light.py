@@ -82,8 +82,8 @@ class SymbolicTest(object):
         return value
 
     def log(self, message):
-        print "*log* %s" % message
         if self.replay:
+            print "*log* %s" % message
             self._log_roll.append(message)
         else:
             symbex.log(message)
