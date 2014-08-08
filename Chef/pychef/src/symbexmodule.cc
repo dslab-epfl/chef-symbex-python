@@ -65,6 +65,7 @@ static int trace_func(PyObject *obj, PyFrameObject *frame, int what,
 
     // XXX: Properly handle the C calls
     if (what == PyTrace_CALL || what == PyTrace_C_CALL) {
+        chef_frame.line_no = frame->f_code->co_firstlineno;
         chef_frame.fn_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_name);
         chef_frame.file_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_filename);
     }
