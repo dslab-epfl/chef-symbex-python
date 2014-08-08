@@ -16,7 +16,6 @@ extern void chef_bb(int);
 extern void chef_set_enabled(int enabled);
 
 static int enable_state = 0;
-static int report_fn_names = 1;
 
 void chef_set_enabled(int enabled) {
     enable_state = enabled;
@@ -27,10 +26,7 @@ void chef_fn_begin(const char *fn_name, int size, int bb_count) {
         return;
     }
 
-    if (report_fn_names)
-        __chef_fn_begin(fn_name, size, bb_count);
-    else
-        __chef_fn_begin(NULL, 0, bb_count);
+    __chef_fn_begin(fn_name, size, (uintptr_t)__builtin_return_address(0));
 }
 
 void chef_fn_end(void) {

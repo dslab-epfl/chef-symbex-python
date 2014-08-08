@@ -778,13 +778,13 @@ static inline int s2e_system_call_concrete(const char *pluginName,
 /* Chef support */
 
 static inline void __chef_fn_begin(const char *fnName, uint32_t fnNameLen,
-        uint32_t bbCount) {
+        uintptr_t address) {
     if (fnName) {
         __s2e_touch_buffer((char*)fnName, fnNameLen);
     }
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(BB, 00)
-        : : "c" (fnName), "a" (fnNameLen), "d" (bbCount)
+        : : "c" (fnName), "a" (fnNameLen), "d" (address)
     );
 }
 
