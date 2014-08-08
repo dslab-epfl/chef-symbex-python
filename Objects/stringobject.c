@@ -70,7 +70,6 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
             "Negative size passed to PyString_FromStringAndSize");
         return NULL;
     }
-
     if (can_intern && size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -107,21 +106,20 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
     op->ob_size = sym_size;
 #endif
     /* share short strings */
-    if (can_intern) {
-		if (size == 0) {
-			PyObject *t = (PyObject *)op;
-			PyString_InternInPlace(&t);
-			op = (PyStringObject *)t;
-			nullstring = op;
-			Py_INCREF(op);
-		}
-		else if (size == 1 && str != NULL) {
-			PyObject *t = (PyObject *)op;
-			PyString_InternInPlace(&t);
-			op = (PyStringObject *)t;
-			characters[*str & UCHAR_MAX] = op;
-			Py_INCREF(op);
-		}
+    if (!can_intern)
+        return (PyObject *) op;
+    if (size == 0) {
+        PyObject *t = (PyObject *)op;
+        PyString_InternInPlace(&t);
+        op = (PyStringObject *)t;
+        nullstring = op;
+        Py_INCREF(op);
+    } else if (size == 1 && str != NULL) {
+        PyObject *t = (PyObject *)op;
+        PyString_InternInPlace(&t);
+        op = (PyStringObject *)t;
+        characters[*str & UCHAR_MAX] = op;
+        Py_INCREF(op);
     }
     return (PyObject *) op;
 }
@@ -149,7 +147,6 @@ PyString_FromString(const char *str)
             "string is too long for a Python string");
         return NULL;
     }
-
     if (can_intern && size == 0 && (op = nullstring) != NULL) {
 #ifdef COUNT_ALLOCS
         null_strings++;
@@ -176,23 +173,21 @@ PyString_FromString(const char *str)
 #ifdef _SYMBEX_VARSIZE
     op->ob_size = sym_size;
 #endif
-
-    if (can_intern) {
-		/* share short strings */
-		if (size == 0) {
-			PyObject *t = (PyObject *)op;
-			PyString_InternInPlace(&t);
-			op = (PyStringObject *)t;
-			nullstring = op;
-			Py_INCREF(op);
-		}
-		else if (size == 1) {
-			PyObject *t = (PyObject *)op;
-			PyString_InternInPlace(&t);
-			op = (PyStringObject *)t;
-			characters[*str & UCHAR_MAX] = op;
-			Py_INCREF(op);
-		}
+    if (!can_intern)
+        return (PyObject *) op;
+    /* share short strings */
+    if (size == 0) {
+        PyObject *t = (PyObject *)op;
+        PyString_InternInPlace(&t);
+        op = (PyStringObject *)t;
+        nullstring = op;
+        Py_INCREF(op);
+    } else if (size == 1) {
+        PyObject *t = (PyObject *)op;
+        PyString_InternInPlace(&t);
+        op = (PyStringObject *)t;
+        characters[*str & UCHAR_MAX] = op;
+        Py_INCREF(op);
     }
     return (PyObject *) op;
 }
@@ -4800,6 +4795,8 @@ PyString_InternInPlace(PyObject **p)
     /* If it's a string subclass, we don't really know what putting
        it in the interned dict might do. */
     if (!PyString_CheckExact(s))
+        return;
+    if (IS_SYMBOLIC_STR_SIZE(s->ob_sval, s->ob_size))
         return;
     if (PyString_CHECK_INTERNED(s))
         return;
