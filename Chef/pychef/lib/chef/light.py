@@ -99,7 +99,7 @@ class SymbolicTest(object):
             traceback.print_exc()
         else:
             exc_type, _, _ = sys.exc_info()
-            print >>sys.stderr, "%s (Not printing details in symbolic mode)" % exc_type.__name__
+            self.log("Error: %s" % exc_type.__name__)
 
     def setUp(self):
         """Called once before the test execution."""
