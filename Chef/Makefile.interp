@@ -39,85 +39,49 @@ CC := clang
 CXX := clang++
 CFLAGS := -march=i586 $(CFLAGS_INSTRUMENT)
 
-.PHONY: all env clean
+python_configure = mkdir -p $(1) && cd $(1) && \
+                    ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
+                           --with-system-ffi \
+                           --enable-symbex \
+                           --enable-symbex-opt=$(2) \
+                           --prefix=$(PYTHONBIN_PREFIX)
+
+PYTHON_CONFIGURATIONS := python-opt0-none python-opt4-all
+
+.PHONY: all env clean $(PYTHON_CONFIGURATIONS)
 
 all: env
 
 clean:
 	rm -rf stamps/
-	rm -rf python-opt0-none/ python-opt1-concrbuff/ python-opt2-intern/ python-opt3-hashes/ python-opt4-all/
-
-PYTHON_BUILDS := python-opt0-none/python python-opt4-all/python
-               # python-opt1-concrbuff/python
-               # python-opt2-intern/python 
-               # python-opt3-hashes/python
-
-# XXX: This looks "a bit" repetitive, maybe there is a way to factor
-# out the common patterns...
+	rm -rf $(PYTHON_CONFIGURATIONS)
 
 # Python configurations
 #######################
 
 python-opt0-none/Makefile:
-	mkdir -p python-opt0-none
-	cd python-opt0-none && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-           --with-system-ffi \
-	   --enable-symbex \
-	   --enable-symbex-opt=none \
-	   --prefix=$(PYTHONBIN_PREFIX)
+	$(call python_configure,python-opt0-none,none)
 
 python-opt1-concrbuff/Makefile:
-	mkdir -p python-opt1-concrbuff
-	cd python-opt1-concrbuff && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-           --with-system-ffi \
-	   --enable-symbex \
-	   --enable-symbex-opt=concrbuff \
-	   --prefix=$(PYTHONBIN_PREFIX)
+	$(call python_configure,python-opt1-concrbuff,"concrbuff")
 
 python-opt2-intern/Makefile:
-	mkdir -p python-opt2-intern
-	cd python-opt2-intern && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-           --with-system-ffi \
-	   --enable-symbex \
-	   --enable-symbex-opt=concrbuff,intern \
-	   --prefix=$(PYTHONBIN_PREFIX)
+	$(call python_configure,python-opt2-intern,"concrbuff,intern")
 
 python-opt3-hashes/Makefile:
-	mkdir -p python-opt3-hashes
-	cd python-opt3-hashes && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-           --with-system-ffi \
-	   --enable-symbex \
-	   --enable-symbex-opt=concrbuff,intern,hashes \
-	   --prefix=$(PYTHONBIN_PREFIX)
+	$(call python_configure,python-opt3-hashes,"concrbuff,intern,hashes")
 
 python-opt4-all/Makefile:
-	mkdir -p python-opt4-all
-	cd python-opt4-all && ../$(PYTHONSRC)/configure CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-           --with-system-ffi \
-	   --enable-symbex \
-	   --enable-symbex-opt=all \
-	   --prefix=$(PYTHONBIN_PREFIX)
+	$(call python_configure,python-opt4-all,all)
 
 # Python builds
 ###############
 
-python-opt0-none/python: python-opt0-none/Makefile
-	$(MAKE) -C python-opt0-none
-
-python-opt1-concrbuff/python: python-opt1-concrbuff/Makefile
-	$(MAKE) -C python-opt1-concrbuff
-
-python-opt2-intern/python: python-opt2-intern/Makefile
-	$(MAKE) -C python-opt2-intern
-
-python-opt3-hashes/python: python-opt3-hashes/Makefile
-	$(MAKE) -C python-opt3-hashes
-
-python-opt4-all/python: python-opt4-all/Makefile
-	$(MAKE) -C python-opt4-all
+$(PYTHON_CONFIGURATIONS): %: %/Makefile
+	$(MAKE) -C $*
 
 # Python install
-python-bin/bin/python: python-opt4-all/python
+python-bin: python-opt4-all/python
 	$(MAKE) -C python-opt4-all install
 
 
@@ -133,7 +97,7 @@ $(VIRTUALENV)/setup.py: $(VIRTUALENV).tar.gz
 
 env: stamps/virtualenv-create
 
-stamps/virtualenv-install: $(PYTHON_BUILDS) python-bin/bin/python $(VIRTUALENV)/setup.py
+stamps/virtualenv-install: $(PYTHON_CONFIGURATIONS) python-bin $(VIRTUALENV)/setup.py
 	cd $(VIRTUALENV) && ../python-bin/bin/python setup.py install
 	mkdir -p stamps && touch $@
 
