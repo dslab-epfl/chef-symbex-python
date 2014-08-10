@@ -1784,6 +1784,7 @@ file_write(PyFileObject *f, PyObject *args)
     }
     f->f_softspace = 0;
 #ifdef SYMBEX_INSTRUMENTATION
+    s2e_get_example((void*)&n, sizeof(n));
     cs = PyMem_Malloc(n);
     memcpy(cs, s, n);
     s2e_get_example((void*)cs, n);
