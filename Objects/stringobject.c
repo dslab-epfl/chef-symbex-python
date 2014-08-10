@@ -2062,8 +2062,13 @@ string_lower(PyStringObject *self)
 
     for (i = 0; i < n; i++) {
         int c = Py_CHARMASK(s[i]);
+#if SYMBEX_INSTRUMENTATION
+        if (c >= 'A' && c <= 'Z')
+            s[i] = 'a' + (c - 'A');
+#else
         if (isupper(c))
             s[i] = _tolower(c);
+#endif
     }
 
     return newobj;
@@ -2095,8 +2100,13 @@ string_upper(PyStringObject *self)
 
     for (i = 0; i < n; i++) {
         int c = Py_CHARMASK(s[i]);
+#if SYMBEX_INSTRUMENTATION
+        if (c >= 'a' && c <= 'z')
+            s[i] = 'A' + (c - 'a');
+#else
         if (islower(c))
             s[i] = _toupper(c);
+#endif
     }
 
     return newobj;
