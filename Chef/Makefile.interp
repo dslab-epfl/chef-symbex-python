@@ -82,7 +82,7 @@ $(PYTHON_CONFIGURATIONS): %: %/Makefile
 
 # Python install
 python-bin: python-opt4-all/python
-	$(MAKE) -C python-opt4-all install
+	test -d python-bin || $(MAKE) -C python-opt4-all install
 
 
 # The virtualenv
