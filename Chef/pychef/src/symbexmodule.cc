@@ -44,6 +44,14 @@ using namespace chef;
 #define DEFAULT_MIN_INT_VALUE   (-128)
 #define DEFAULT_MAX_INT_VALUE     127
 
+#define S2E_CONCOLIC_PLUGIN        "ConcolicSession"
+
+typedef enum {
+    START_CONCOLIC_SESSION,
+    END_CONCOLIC_SESSION,
+    LOG_MESSAGE
+} ConcolicCommand;
+
 /*== Globals =================================================================*/
 
 static PyObject *SymbexError;
@@ -227,7 +235,7 @@ PyDoc_STRVAR(symbex_startconcolic_doc,
 Mark the start of a concolic session.");
 
 static void startconcolic_atexit() {
-	concolic_session->EndConcolicSession(true);
+    s2e_guest->SystemCall(S2E_CONCOLIC_PLUGIN, END_CONCOLIC_SESSION, NULL, 0);
 }
 
 static PyObject *
@@ -238,7 +246,8 @@ symbex_startconcolic(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	if (concolic_session->StartConcolicSession(false, max_time, false) != 0) {
+	if (s2e_guest->SystemCall(S2E_CONCOLIC_PLUGIN, START_CONCOLIC_SESSION,
+	        NULL, 0) != 0) {
 		PyErr_SetString(SymbexError, "Could not start concolic session");
 		return NULL;
 	}
@@ -270,7 +279,8 @@ symbex_endconcolic(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	if (concolic_session->EndConcolicSession(is_error_path) != 0) {
+	if (s2e_guest->SystemCall(S2E_CONCOLIC_PLUGIN, END_CONCOLIC_SESSION,
+	        NULL, 0) != 0) {
 		PyErr_SetString(SymbexError, "Could not terminate concolic session");
 		return NULL;
 	}
@@ -356,22 +366,29 @@ symbex_assumeascii(PyObject *self, PyObject *args) {
 
 /*----------------------------------------------------------------------------*/
 
-PyDoc_STRVAR(symbex_log_doc,
-"log(str) \n\
+PyDoc_STRVAR(symbex_symcall_doc,
+"symcall(plugin, id, value) \n\
 \n\
-Append a string message to the current state log");
+Invoke an S2E system call");
 
 static PyObject *
-symbex_log(PyObject *self, PyObject *args) {
-	const char *message;
-	Py_ssize_t size;
+symbex_symcall(PyObject *self, PyObject *args) {
+    const char *plugin;
+    uint32_t id;
+    const char *data;
+    Py_ssize_t data_size;
 
-	if (!PyArg_ParseTuple(args, "s#:log", &message, &size)) {
-		return NULL;
-	}
+    if (!PyArg_ParseTuple(args, "sIs#:symcall", &plugin, &id, &data,
+            &data_size)) {
+        return NULL;
+    }
 
-	concolic_session->LogMessage(message, size);
-	Py_RETURN_NONE;
+    if (s2e_guest->SystemCall(plugin, id, (void*)data, data_size) != 0) {
+        PyErr_SetString(SymbexError, "Could not invoke syscall");
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
 }
 
 /*== Module Definition =======================================================*/
@@ -392,13 +409,13 @@ static PyMethodDef SymbexMethods[] = {
 
 	{ "startconcolic", symbex_startconcolic, METH_VARARGS, symbex_startconcolic_doc },
 	{ "endconcolic", symbex_endconcolic, METH_VARARGS, symbex_endconcolic_doc },
+	{ "symcall", symbex_symcall, METH_VARARGS, symbex_symcall_doc },
 #if 0
 	{ "snapshotrun", symbex_snapshotrun, METH_VARARGS, symbex_snapshotrun_doc },
 #endif
 
 	{ "assume", symbex_assume, METH_VARARGS, symbex_assume_doc },
 	{ "assumeascii", symbex_assumeascii, METH_VARARGS, symbex_assumeascii_doc },
-	{ "log", symbex_log, METH_VARARGS, symbex_log_doc },
 	{ NULL, NULL, 0, NULL } /* Sentinel */
 };
 

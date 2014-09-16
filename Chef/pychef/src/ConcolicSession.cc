@@ -25,27 +25,8 @@
 #include "S2EGuest.h"
 
 #include <Python.h>
-
-#ifdef SYMBEX_INSTRUMENTATION
-#include <symbex.h>
-#else
-typedef enum {
-    START_CONCOLIC_SESSION,
-    END_CONCOLIC_SESSION,
-    LOG_MESSAGE,
-    MERGE_BARRIER,
-    FUNCTION_BEGIN,
-    FUNCTION_END,
-    BASIC_BLOCK,
-    FINE_GRAINED_TRACE
-} ConcolicCommand;
-#endif
-
 #include <cassert>
 #include <string>
-
-
-#define S2E_CONCOLIC_PLUGIN        "ConcolicSession"
 
 namespace {
 
@@ -383,20 +364,5 @@ PyObject *ConcolicSession::MakeConcolicTuple(PyObject *target,
 	return target;
 }
 
-int ConcolicSession::StartConcolicSession(bool stop_on_error,
-		uint32_t max_time, bool use_random_select) {
-    return s2e_guest_->SystemCall(S2E_CONCOLIC_PLUGIN,
-            ::START_CONCOLIC_SESSION, NULL, 0);
-}
-
-int ConcolicSession::EndConcolicSession(bool is_error_path) {
-    return s2e_guest_->SystemCall(S2E_CONCOLIC_PLUGIN,
-            ::END_CONCOLIC_SESSION, NULL, 0);
-}
-
-int ConcolicSession::LogMessage(const char *log_msg, Py_ssize_t size) {
-    return s2e_guest_->SystemCall(S2E_CONCOLIC_PLUGIN,
-            ::LOG_MESSAGE, (void*)log_msg, (uint32_t)size);
-}
 
 } /* namespace chef */

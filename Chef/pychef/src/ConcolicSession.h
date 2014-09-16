@@ -46,11 +46,6 @@ public:
 			uint32_t max_time, bool use_random_select, bool debug);
 #endif
 
-	int StartConcolicSession(bool stop_on_error, uint32_t max_time,
-			bool use_random_select);
-	int EndConcolicSession(bool is_error_path);
-	int LogMessage(const char *message, Py_ssize_t size);
-
 	PyObject *MakeConcolicSequence(PyObject *target, const char *name,
 			int max_size, int min_size);
 

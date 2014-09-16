@@ -39,6 +39,16 @@ from chef import symbex
 from chef.chef_data_pb2 import TestCase as TestCase_pb2
 
 
+CHEF_S2E_PLUGIN = "ConcolicSession"
+
+
+class ChefSymCall(object):
+    START_CONCOLIC_SESSION = 0
+    END_CONCOLIC_SESSION = 1
+    LOG_MESSAGE = 2
+    REPORT_PROCESS_MAP = 3
+
+
 class SymbolicTest(object):
     """Base class for symbolic tests"""
 
@@ -86,7 +96,7 @@ class SymbolicTest(object):
             print "*log* %s" % message
             self._log_roll.append(message)
         else:
-            symbex.log(message)
+            symbex.symcall(CHEF_S2E_PLUGIN, ChefSymCall.LOG_MESSAGE, message)
     
     def concretize(self, value):
         if self.replay:
@@ -144,6 +154,10 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
 
     test_inst = symbolic_test(**test_args)
     test_inst.setUp()
+
+    with open("/proc/self/maps", "r") as f:
+        data = f.read()
+        symbex.symcall(CHEF_S2E_PLUGIN, ChefSymCall.REPORT_PROCESS_MAP, data)
 
     concolic_session = False
     try:
