@@ -67,25 +67,10 @@
 
 #define _SYMBEX_HASH_VALUE       0xABC
 
-#define _SYMBEX_TRACE_SIZE  2
-
+// XXX: Clean this up
 #define _SYMBEX_OP_EBRANCH_POS   0
 #define _SYMBEX_OP_THROWS_POS    1
 #define _SYMBEX_OP_CALL_POS      2
-
-typedef struct {
-    uint32_t op_code;
-    uint32_t op_attr;
-    uint32_t frame_count;
-    uint32_t frames[_SYMBEX_TRACE_SIZE];
-} __attribute__((packed)) TraceUpdate;
-
-
-typedef enum {
-    START_CONCOLIC_SESSION,
-    END_CONCOLIC_SESSION,
-    LOG_MESSAGE
-} ConcolicCommand;
 
 
 #else
