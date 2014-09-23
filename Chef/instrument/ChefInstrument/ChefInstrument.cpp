@@ -3,6 +3,7 @@
  */
 
 #include <llvm/Pass.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Function.h>
@@ -24,6 +25,16 @@ using namespace llvm;
 static const char *kChefFnBegin = "chef_fn_begin";
 static const char *kChefFnEnd = "chef_fn_end";
 static const char *kChefBasicBlock = "chef_bb";
+
+static const char *kBasicBlockAsm =
+        "jmp .+0xf\n"
+        ".byte 0x53, 0x32, 0x45, 0x00\n"
+        ".byte 0x00, 0x00, 0x00, 0x00\n"
+        "nop\n"
+        "nop\n"
+        "nop\n"
+        "nop\n"
+        "nop\n";
 
 
 namespace {
@@ -129,9 +140,15 @@ struct ChefInstrument : public ModulePass {
         for (ReversePostOrderTraversal<Function*>::rpo_iterator it = RPOT.begin(),
                 ie = RPOT.end(); it != ie; ++it) {
             BasicBlock *bb = *it;
-            CallInst::Create(FnChefBB,
-                    ConstantInt::get(Type::getInt32Ty(F.getContext()), Counter),
-                    "", bb->getFirstNonPHI());
+            CallInst::Create(
+                    InlineAsm::get(
+                            FunctionType::get(Type::getVoidTy(F.getContext()), false),
+                            kBasicBlockAsm,
+                            StringRef(""),
+                            true),
+                    "",
+                    bb->getFirstNonPHI()
+            );
             Counter++;
         }
 
