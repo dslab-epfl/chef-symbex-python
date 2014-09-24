@@ -70,7 +70,6 @@
         "push %%rbx\n"        \
         "push %%rsi\n"        \
         "push %%rdi\n"        \
-        "push %%rbp\n"        \
         "push %%r8\n"         \
         "push %%r9\n"         \
         "push %%r10\n"        \
@@ -79,6 +78,7 @@
         "push %%r13\n"        \
         "push %%r14\n"        \
         "push %%r15\n"        \
+        "push %%rbp\n"        \
                               \
         "xor  %%rbx, %%rbx\n" \
         "xor  %%rsi, %%rsi\n" \
@@ -94,6 +94,7 @@
         "xor  %%r15, %%r15\n"
 
 #define S2E_CONCRETE_EPILOGUE \
+        "pop %%rbp\n"         \
         "pop %%r15\n"         \
         "pop %%r14\n"         \
         "pop %%r13\n"         \
@@ -102,25 +103,24 @@
         "pop %%r10\n"         \
         "pop %%r9\n"          \
         "pop %%r8\n"          \
-        "pop %%rbp\n"         \
         "pop %%rdi\n"         \
         "pop %%rsi\n"         \
         "pop %%rbx\n"
 #else
 #define S2E_CONCRETE_PROLOGUE \
         "push %%ebx\n"        \
-        "push %%ebp\n"        \
         "push %%esi\n"        \
         "push %%edi\n"        \
+        "push %%ebp\n"        \
         "xor %%ebx, %%ebx\n"  \
         "xor %%ebp, %%ebp\n"  \
         "xor %%esi, %%esi\n"  \
         "xor %%edi, %%edi\n"
 
 #define S2E_CONCRETE_EPILOGUE \
+        "pop %%ebp\n"         \
         "pop %%edi\n"         \
         "pop %%esi\n"         \
-        "pop %%ebp\n"         \
         "pop %%ebx\n"
 #endif
 
@@ -797,8 +797,6 @@ static inline void __chef_fn_end(void) {
 
 static inline void __chef_bb(uint32_t bb) {
     __asm__ __volatile__(
-        S2E_CONCRETE_PROLOGUE
-
 /* We don't use registers A and D, so make sure they're not symbolic... */
 #ifdef __x86_64__
         "push %%rax\n"
@@ -814,12 +812,16 @@ static inline void __chef_bb(uint32_t bb) {
         "xor %%edx, %%edx\n"
 #endif
 
+        S2E_CONCRETE_PROLOGUE
+
         S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
 
         "jmp __sip1\n" /* Force concrete mode */
         "__sip1:\n"
 
         S2E_INSTRUCTION_COMPLEX(BB, 02)
+
+        S2E_CONCRETE_EPILOGUE
 
 #ifdef __x86_64__
         "pop %%rdx\n"
@@ -828,9 +830,6 @@ static inline void __chef_bb(uint32_t bb) {
         "pop %%edx\n"
         "pop %%eax\n"
 #endif
-
-        S2E_CONCRETE_EPILOGUE
-
         : : "c" (bb)
     );
 }
