@@ -21,30 +21,30 @@ This phase should run in normal (KVM) mode in S2E. Consult the main Chef README 
 
 In the ``$CHEF_ROOT/python-src/chef/build``, run the following:
 
-  $ make -f ../Makefile.interp
+    $ make -f ../Makefile.interp
 
 Then activate the resulting Python environment using:
 
-  $ source $CHEF_ROOT/python-src/chef/build/python-env/bin/activate
+    $ source $CHEF_ROOT/python-src/chef/build/python-env/bin/activate
 
 Next, install the Chef native extension:
 
-  $ cd $CHEF_ROOT/python-src/chef/pychef && pip install -e .
+    $ cd $CHEF_ROOT/python-src/chef/pychef && pip install -e .
 
 
 ### Phase 2: Preparing the symbolic environment ("prep" mode in S2E)
 
 Activate the Python environment:
 
-  $ source $CHEF_ROOT/python-src/chef/build/python-env/bin/activate
+    $ source $CHEF_ROOT/python-src/chef/build/python-env/bin/activate
 
 Enable symbolic execution mode:
 
-  $ export PYTHONSYMBEX=1
+    $ export PYTHONSYMBEX=1
 
 (Optional) The environment includes all the optimization configurations used in the paper.  To select a particular optimization, set the "PYTHONSYMBEXOPT" environment variable before invoking the Python executable:
 
-  $ PYTHONSYMBEXOPT=0 python -c 'print "hi"'
+    $ PYTHONSYMBEXOPT=0 python -c 'print "hi"'
 
 The optimization numbers go from 0 (no optimizations) to 4 (all optimizations) -- see the next section for more details.
 
@@ -53,7 +53,7 @@ The optimization numbers go from 0 (no optimizations) to 4 (all optimizations) -
 
 Run the target symbolic test case. For instance:
 
-  $ python symtests/asplos_tests.py ArgparseTest
+    $ python symtests/asplos_tests.py ArgparseTest
 
 
 ## Building a Chef-adapted Python binary
@@ -62,15 +62,16 @@ Behind the scenes, Makefile.interp builds the Python interpreter under a set of 
 
 Configure with symbolic execution and optimizations enabled:
 
-  $ ./configure [--enable-symbex] [--enable-symbex-opt[=OPT[,OPT[,...]]]] [--prefix=<path>] ...
+    $ ./configure [--enable-symbex] [--enable-symbex-opt[=OPT[,OPT[,...]]]] [--prefix=<path>] ...
 
 where ``OPT`` can be one of the following:
-  ``none``: No optimization enabled (equivalent to ``PYTHONSYMBEXOPT=0``)
-  ``concrbuff``: Memory buffer concretization (equivalent to ``PYTHONSYMBEXOPT=1``)
-  ``intern``: Interning elimination (available when ``PYTHONSYMBEXOPT=2``)
-  ``hashes``: Everything above + Hash neutralization (available when ``PYTHONSYMBEXOPT=3``)
-  ``fastpath``: Everything above + Fast path elimination (available when ``PYTHONSYMBEXOPT=3``)
-  ``all``: All optimizations enabled (available when ``PYTHONSYMBEXOPT=4`` or empty)
+
+  * ``none``: No optimization enabled (equivalent to ``PYTHONSYMBEXOPT=0``)
+  * ``concrbuff``: Memory buffer concretization (equivalent to ``PYTHONSYMBEXOPT=1``)
+  * ``intern``: Interning elimination (available when ``PYTHONSYMBEXOPT=2``)
+  * ``hashes``: Everything above + Hash neutralization (available when ``PYTHONSYMBEXOPT=3``)
+  * ``fastpath``: Everything above + Fast path elimination (available when ``PYTHONSYMBEXOPT=3``)
+  * ``all``: All optimizations enabled (available when ``PYTHONSYMBEXOPT=4`` or empty)
 
 Then build as normal (``make && make install``).
 
