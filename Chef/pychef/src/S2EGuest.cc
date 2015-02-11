@@ -23,11 +23,8 @@
 #include "S2EGuest.h"
 #include "Python.h"
 
-#ifdef SYMBEX_INSTRUMENTATION
-#include <symbex.h>
-#else
-#include "s2e/s2e.h"
-#endif
+#include <s2e/chef.h>
+
 
 namespace chef {
 
@@ -54,7 +51,7 @@ int S2EGuest::InvokePlugin(const char *pluginName, void *data,
 
 int S2EGuest::SystemCall(const char *pluginName, uint32_t id, void *data,
         uint32_t dataSize) {
-    return s2e_system_call(pluginName, id, data, dataSize);
+    return s2e_plugin_call(pluginName, id, data, dataSize);
 }
 
 void S2EGuest::KillState(int status, const char *message) {

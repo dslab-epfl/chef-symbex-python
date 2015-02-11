@@ -41,10 +41,31 @@
 #include <inttypes.h>
 #include <stdarg.h>
 
+#ifdef S2E_DISPATCH_CUSTOM
+/* (Deprecated) We define our own custom instruction, using a previously
+ * unallocated opcode sequence. Therefore, this construct would cause a
+ * processor exception on real hardware or non-S2E virtual environments.
+ */
 #define S2E_INSTRUCTION_COMPLEX(val1, val2)             \
     ".byte 0x0F, 0x3F\n"                                \
     ".byte 0x00, 0x" #val1 ", 0x" #val2 ", 0x00\n"      \
     ".byte 0x00, 0x00, 0x00, 0x00\n"
+
+#else
+/* We overload a multi-byte NOP instruction.  We reuse the 8-byte form
+ * NOP DWORD ptr [EAX + EAX*1 + 00000000H], corresponding to the sequence
+ * 0F 1F 84 00 00 00 00 00H
+ *
+ * The last five bytes can be changed arbitrarily, and we use them as follows:
+ *   Byte 3 - The S2E magic number 0x42
+ *   Byte 4-7 - A 32-bit S2E instruction payload.
+ */
+#define S2E_INSTRUCTION_COMPLEX(val1, val2)             \
+    ".byte 0x0F, 0x1F\n"                                \
+    ".byte 0x84, 0x42\n"                                \
+    ".byte 0x00, 0x" #val1 ", 0x" #val2 ", 0x00\n"
+#endif /* defined(S2E_DISPATCH_CUSTOM) */
+
 
 #define S2E_INSTRUCTION_SIMPLE(val)                     \
     S2E_INSTRUCTION_COMPLEX(val, 00)
@@ -63,12 +84,13 @@
         "popl %%ebx\n"
 #endif
 
+
+
 #ifdef __x86_64__
 #define S2E_CONCRETE_PROLOGUE \
         "push %%rbx\n"        \
         "push %%rsi\n"        \
         "push %%rdi\n"        \
-        "push %%rbp\n"        \
         "push %%r8\n"         \
         "push %%r9\n"         \
         "push %%r10\n"        \
@@ -77,6 +99,7 @@
         "push %%r13\n"        \
         "push %%r14\n"        \
         "push %%r15\n"        \
+        "push %%rbp\n"        \
                               \
         "xor  %%rbx, %%rbx\n" \
         "xor  %%rsi, %%rsi\n" \
@@ -92,6 +115,7 @@
         "xor  %%r15, %%r15\n"
 
 #define S2E_CONCRETE_EPILOGUE \
+        "pop %%rbp\n"         \
         "pop %%r15\n"         \
         "pop %%r14\n"         \
         "pop %%r13\n"         \
@@ -100,25 +124,24 @@
         "pop %%r10\n"         \
         "pop %%r9\n"          \
         "pop %%r8\n"          \
-        "pop %%rbp\n"         \
         "pop %%rdi\n"         \
         "pop %%rsi\n"         \
         "pop %%rbx\n"
 #else
 #define S2E_CONCRETE_PROLOGUE \
         "push %%ebx\n"        \
-        "push %%ebp\n"        \
         "push %%esi\n"        \
         "push %%edi\n"        \
+        "push %%ebp\n"        \
         "xor %%ebx, %%ebx\n"  \
         "xor %%ebp, %%ebp\n"  \
         "xor %%esi, %%esi\n"  \
         "xor %%edi, %%edi\n"
 
 #define S2E_CONCRETE_EPILOGUE \
+        "pop %%ebp\n"         \
         "pop %%edi\n"         \
         "pop %%esi\n"         \
-        "pop %%ebp\n"         \
         "pop %%ebx\n"
 #endif
 
@@ -154,8 +177,7 @@ static inline void __s2e_touch_buffer(volatile char *buffer, unsigned size)
 /** Get S2E version or 0 when running without S2E. */
 static inline int s2e_version(void)
 {
-    int version;
-
+    int version = 0;
     __asm__ __volatile__(
         S2E_INSTRUCTION_SIMPLE(00)
         : "=a" (version)  : "a" (0)
@@ -302,8 +324,7 @@ static inline void s2e_assume_range(unsigned int expression, unsigned int lower,
 /** Returns true if ptr points to symbolic memory */
 static inline int s2e_is_symbolic(const void *ptr, size_t size)
 {
-    int result;
-
+    int result = 0;
     __s2e_touch_buffer((char*)ptr, 1);
     __asm__ __volatile__(
         S2E_INSTRUCTION_SIMPLE(04)
@@ -333,34 +354,31 @@ static inline void s2e_get_example(void *buf, int size)
 }
 
 /** Get example value for expression (without adding state constraints). */
+static inline void s2e_get_range(uintptr_t expr, uintptr_t *low, uintptr_t *high)
+{
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_REGISTERS_SIMPLE(34)
+        : : "a" (expr), "c" (low), "d" (high)
+    );
+}
+
+static inline unsigned s2e_get_constraint_count(uintptr_t expr)
+{
+    unsigned result = 0;
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_SIMPLE(35)
+        : "=a" (result) : "a" (expr)
+    );
+    return result;
+}
+
+/** Get example value for expression (without adding state constraints). */
 /** Convenience function to be used in printfs */
 static inline unsigned s2e_get_example_uint(unsigned val)
 {
     unsigned buf = val;
     __asm__ __volatile__(
         S2E_INSTRUCTION_REGISTERS_SIMPLE(21)
-        : : "a" (&buf), "d" (sizeof(buf)) : "memory"
-    );
-    return buf;
-}
-
-/** Get maximum value for unsigned expression. */
-static inline unsigned s2e_get_upper_bound(unsigned val)
-{
-    unsigned buf = val;
-    __asm__ __volatile__(
-        S2E_INSTRUCTION_REGISTERS_SIMPLE(22)
-        : : "a" (&buf), "d" (sizeof(buf)) : "memory"
-    );
-    return buf;
-}
-
-/** Get minimum value for expression. */
-static inline unsigned s2e_get_lower_bound(unsigned val)
-{
-    unsigned buf = val;
-    __asm__ __volatile__(
-        S2E_INSTRUCTION_REGISTERS_SIMPLE(23)
         : : "a" (&buf), "d" (sizeof(buf)) : "memory"
     );
     return buf;
@@ -422,7 +440,7 @@ static inline void s2e_enable_all_apic_interrupts(void)
 /** Get the current S2E_RAM_OBJECT_BITS configuration macro */
 static inline int s2e_get_ram_object_bits(void)
 {
-    int bits;
+    int bits = -1;
     __asm__ __volatile__(
         S2E_INSTRUCTION_SIMPLE(52)
         : "=a" (bits)  : "a" (0)
@@ -430,12 +448,12 @@ static inline int s2e_get_ram_object_bits(void)
     return bits;
 }
 
-/** Open file from the guest.
+/** Open file from the host.
  *
  * NOTE: This requires the HostFiles plugin. */
 static inline int s2e_open(const char *fname)
 {
-    int fd;
+    int fd = -1;
     __s2e_touch_string(fname);
     __asm__ __volatile__(
         S2E_INSTRUCTION_SIMPLE(EE)
@@ -444,12 +462,12 @@ static inline int s2e_open(const char *fname)
     return fd;
 }
 
-/** Close file from the guest.
+/** Close file from the host.
  *
  * NOTE: This requires the HostFiles plugin. */
 static inline int s2e_close(int fd)
 {
-    int res;
+    int res = -1;
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(EE, 01)
         : "=a" (res) : "a" (-1), "b" (fd)
@@ -457,12 +475,12 @@ static inline int s2e_close(int fd)
     return res;
 }
 
-/** Read file content from the guest.
+/** Read file content from the host.
  *
  * NOTE: This requires the HostFiles plugin. */
 static inline int s2e_read(int fd, char *buf, int count)
 {
-    int res;
+    int res = -1;
     __s2e_touch_buffer(buf, count);
     __asm__ __volatile__(
 #ifdef __x86_64__
@@ -482,6 +500,48 @@ static inline int s2e_read(int fd, char *buf, int count)
     );
     return res;
 }
+
+/** Creates a file in the host (write only).
+ *
+ * NOTE: This requires the HostFiles plugin. */
+static inline int s2e_create(const char *fname)
+{
+    int fd = -1;
+    __s2e_touch_string(fname);
+    __asm__ __volatile__(
+        S2E_INSTRUCTION_COMPLEX(EE, 03)
+        : "=a" (fd) : "a"(-1), "b" (fname), "c" (0)
+    );
+    return fd;
+}
+
+/** Write file content to the host.
+ *
+ * NOTE: This requires the HostFiles plugin. */
+static inline int s2e_write(int fd, char *buf, int count)
+{
+    int res = -1;
+    __s2e_touch_buffer(buf, count);
+    __asm__ __volatile__(
+#ifdef __x86_64__
+        "push %%rbx\n"
+        "mov %%rsi, %%rbx\n"
+#else
+        "pushl %%ebx\n"
+        "movl %%esi, %%ebx\n"
+#endif
+        S2E_INSTRUCTION_COMPLEX(EE, 04)
+#ifdef __x86_64__
+        "pop %%rbx\n"
+#else
+        "popl %%ebx\n"
+#endif
+        : "=a" (res) : "a" (-1), "S" (fd), "c" (buf), "d" (count)
+    );
+    return res;
+}
+
+
 
 /** Enable memory tracing */
 static inline void s2e_memtracer_enable(void)
@@ -558,7 +618,7 @@ static inline void s2e_codeselector_enable_address_space(unsigned user_mode_only
 
 /** Disable forking in the specified process (represented by its page directory).
     If pagedir is 0, disable forking in the current process. */
-static inline void s2e_codeselector_disable_address_space(uintptr_t pagedir)
+static inline void s2e_codeselector_disable_address_space(uint64_t pagedir)
 {
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(AE, 01)
@@ -626,7 +686,7 @@ static inline int s2e_range(int start, int end, const char *name)
 }
 
 static inline int __raw_invoke_plugin(const char *pluginName, void *data, uint32_t dataSize) {
-    int result;
+    int result = -1;
 
     __asm__ __volatile__(
         S2E_INSTRUCTION_SIMPLE(0B)
@@ -637,7 +697,7 @@ static inline int __raw_invoke_plugin(const char *pluginName, void *data, uint32
 }
 
 static inline int __raw_invoke_plugin_concrete(const char *pluginName, void *data, uint32_t dataSize) {
-    int result;
+    int result = -1;
 
     __asm__ __volatile__(
         S2E_CONCRETE_PROLOGUE
@@ -709,174 +769,6 @@ static inline int s2e_hex_dump(const char *name, void *addr, unsigned size)
     );
     return fd;
 }
-
-
-typedef struct {
-    uint32_t id;
-    uint32_t data;
-    uint32_t dataSize;
-} __attribute__((packed)) syscall_t;
-
-
-static inline int s2e_system_call(const char *pluginName,
-        uint32_t id, volatile void *data, uint32_t dataSize) {
-    syscall_t syscall;
-    syscall.id = id;
-    syscall.data = (uint32_t)(uintptr_t)data;
-    syscall.dataSize = dataSize;
-
-    __s2e_touch_string(pluginName);
-    if (data) {
-        __s2e_touch_buffer((char*)data, dataSize);
-    }
-
-    return __raw_invoke_plugin(pluginName, &syscall, sizeof(syscall));
-}
-
-static inline int s2e_system_call_concrete(const char *pluginName,
-        uint32_t id, volatile void *data, uint32_t dataSize) {
-    syscall_t syscall;
-    syscall.id = id;
-    syscall.data = (uint32_t)(uintptr_t)data;
-    syscall.dataSize = dataSize;
-
-    __s2e_touch_string(pluginName);
-    if (data) {
-        __s2e_touch_buffer((char*)data, dataSize);
-    }
-
-    return __raw_invoke_plugin_concrete(pluginName, &syscall, sizeof(syscall));
-}
-
-
-/* Chef support */
-
-static inline void __chef_fn_begin(const char *fnName, uint32_t fnNameLen,
-        uintptr_t address) {
-    if (fnName) {
-        __s2e_touch_buffer((char*)fnName, fnNameLen);
-    }
-    __asm__ __volatile__(
-        S2E_INSTRUCTION_COMPLEX(BB, 00)
-        : : "c" (fnName), "a" (fnNameLen), "d" (address)
-    );
-}
-
-static inline void __chef_fn_end(void) {
-    __asm__ __volatile__(
-        S2E_INSTRUCTION_COMPLEX(BB, 01)
-    );
-}
-
-
-static inline void __chef_bb(uint32_t bb) {
-    __asm__ __volatile__(
-        S2E_CONCRETE_PROLOGUE
-
-/* We don't use registers A and D, so make sure they're not symbolic... */
-#ifdef __x86_64__
-        "push %%rax\n"
-        "push %%rdx\n"
-
-        "xor %%rax, %%rax\n"
-        "xor %%rdx, %%rdx\n"
-#else
-        "push %%eax\n"
-        "push %%edx\n"
-
-        "xor %%eax, %%eax\n"
-        "xor %%edx, %%edx\n"
-#endif
-
-        S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
-
-        "jmp __sip1\n" /* Force concrete mode */
-        "__sip1:\n"
-
-        S2E_INSTRUCTION_COMPLEX(BB, 02)
-
-#ifdef __x86_64__
-        "pop %%rdx\n"
-        "pop %%rax\n"
-#else
-        "pop %%edx\n"
-        "pop %%eax\n"
-#endif
-
-        S2E_CONCRETE_EPILOGUE
-
-        : : "c" (bb)
-    );
-}
-
-
-static inline int __chef_hlpc(uint32_t opcode, uint32_t *hlpc,
-        uint32_t hlpcLen) {
-    int result = 0;
-
-    __s2e_touch_buffer((char*)hlpc, hlpcLen*sizeof(uint32_t));
-
-    __asm__ __volatile__(
-        S2E_CONCRETE_PROLOGUE
-        S2E_INSTRUCTION_SIMPLE(53) /* Clear temp flags */
-
-        "jmp __sip1\n" /* Force concrete mode */
-        "__sip1:\n"
-
-        S2E_INSTRUCTION_COMPLEX(BB, 03)
-        S2E_CONCRETE_EPILOGUE
-
-        : "=a" (result) : "a" (opcode), "c" (hlpc), "d" (hlpcLen) : "memory"
-    );
-    return result;
-}
-
-
-typedef enum {
-    CHEF_TRACE_CALL = 0,
-    CHEF_TRACE_EXCEPTION = 1,
-    CHEF_TRACE_LINE = 2,
-    CHEF_TRACE_RETURN = 3,
-    CHEF_TRACE_C_CALL = 4,
-    CHEF_TRACE_C_EXCEPTION = 5,
-    CHEF_TRACE_C_RETURN = 6,
-    CHEF_TRACE_INIT = 7
-} hl_trace_reason;
-
-
-typedef struct {
-    /* Identification */
-    int32_t last_inst;
-    uintptr_t function;
-
-    /* Debug info */
-    int32_t line_no;
-    uintptr_t fn_name;
-    uintptr_t file_name;
-} __attribute__((packed)) hl_frame_t;
-
-
-static inline void __chef_hl_trace(hl_trace_reason reason, hl_frame_t *frame,
-        uint32_t frameCount) {
-    int i;
-    __s2e_touch_buffer((char*)frame, frameCount*sizeof(hl_frame_t));
-
-    for (i = 0; i < frameCount; ++i) {
-        if (frame[i].fn_name) {
-            __s2e_touch_string((char*)frame[i].fn_name);
-        }
-        if (frame[i].file_name) {
-            __s2e_touch_string((char*)frame[i].file_name);
-        }
-    }
-
-    __asm__ __volatile__(
-        S2E_INSTRUCTION_COMPLEX(BB, 04)
-
-        : : "c" (reason), "a" (frame), "d" (frameCount)
-    );
-}
-
 
 
 #endif /* _S2E_H */

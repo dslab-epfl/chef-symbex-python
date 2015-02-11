@@ -27,11 +27,7 @@
 #include "S2EGuest.h"
 #include "SymbolicUtils.h"
 
-#ifdef SYMBEX_INSTRUMENTATION
-#include <symbex.h>
-#else
-#include "s2e/s2e.h"
-#endif
+#include "s2e/chef.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -51,6 +47,13 @@ typedef enum {
     END_CONCOLIC_SESSION,
     LOG_MESSAGE
 } ConcolicCommand;
+
+
+enum {
+    S2E_CHEF_CALIBRATE = 0x1000,
+    S2E_CHEF_CALIBRATE_END = 0x1001
+};
+
 
 /*== Globals =================================================================*/
 
@@ -391,6 +394,30 @@ symbex_symcall(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+/*----------------------------------------------------------------------------*/
+
+PyDoc_STRVAR(symbex_calibrate_doc,
+"calibrate(end) \n\
+\n\
+Run a calibration probe to detect interpreter structure");
+
+static PyObject *
+symbex_calibrate(PyObject *self, PyObject *args) {
+    unsigned char end;
+
+    if (!PyArg_ParseTuple(args, "b:calibrate", &end)) {
+        return NULL;
+    }
+
+    if (end) {
+        s2e_system_call(S2E_CHEF_CALIBRATE_END, NULL, 0);
+    } else {
+        s2e_system_call(S2E_CHEF_CALIBRATE, NULL, 0);
+    }
+
+    Py_RETURN_NONE;
+}
+
 /*== Module Definition =======================================================*/
 
 PyDoc_STRVAR(module_doc,
@@ -416,6 +443,7 @@ static PyMethodDef SymbexMethods[] = {
 
 	{ "assume", symbex_assume, METH_VARARGS, symbex_assume_doc },
 	{ "assumeascii", symbex_assumeascii, METH_VARARGS, symbex_assumeascii_doc },
+	{ "calibrate", symbex_calibrate, METH_VARARGS, symbex_calibrate_doc },
 	{ NULL, NULL, 0, NULL } /* Sentinel */
 };
 

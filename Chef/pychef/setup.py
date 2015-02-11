@@ -84,9 +84,13 @@ setup(name="ChefSymTest",
       package_dir={"": "lib"},
       packages=['chef'],
       ext_package='chef',
-      ext_modules=[Extension('symbex', ['src/symbexmodule.cc',
-                                        'src/ConcolicSession.cc',
-                                        'src/S2EGuest.cc',
-                                        'src/SymbolicUtils.cc'])],
+      ext_modules=[
+          Extension('symbex',
+                    sources=['src/symbexmodule.cc',
+                             'src/ConcolicSession.cc',
+                             'src/S2EGuest.cc',
+                             'src/SymbolicUtils.cc'],
+                    include_dirs=['include'])
+      ],
       cmdclass={"build_py": build_py}
       )
