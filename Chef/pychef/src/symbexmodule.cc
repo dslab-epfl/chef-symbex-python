@@ -403,16 +403,17 @@ Run a calibration probe to detect interpreter structure");
 
 static PyObject *
 symbex_calibrate(PyObject *self, PyObject *args) {
-    unsigned char end;
+    unsigned count = 1;
+    unsigned char end = 0;
 
-    if (!PyArg_ParseTuple(args, "b:calibrate", &end)) {
+    if (!PyArg_ParseTuple(args, "|Ib:calibrate", &count, &end)) {
         return NULL;
     }
 
     if (end) {
-        s2e_system_call(S2E_CHEF_CALIBRATE_END, NULL, 0);
+        s2e_system_call(S2E_CHEF_CALIBRATE_END, NULL, count);
     } else {
-        s2e_system_call(S2E_CHEF_CALIBRATE, NULL, 0);
+        s2e_system_call(S2E_CHEF_CALIBRATE, NULL, count);
     }
 
     Py_RETURN_NONE;
