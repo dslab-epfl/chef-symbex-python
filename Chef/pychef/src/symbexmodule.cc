@@ -50,8 +50,9 @@ typedef enum {
 
 
 enum {
-    S2E_CHEF_CALIBRATE = 0x1000,
-    S2E_CHEF_CALIBRATE_END = 0x1001
+    S2E_CHEF_CALIBRATE_START = 0x1000,
+    S2E_CHEF_CALIBRATE_END = 0x1001,
+    S2E_CHEF_CALIBRATE_CHECKPOINT = 0x1002
 };
 
 
@@ -403,17 +404,26 @@ Run a calibration probe to detect interpreter structure");
 
 static PyObject *
 symbex_calibrate(PyObject *self, PyObject *args) {
+    unsigned op;
     unsigned count = 1;
-    unsigned char end = 0;
 
-    if (!PyArg_ParseTuple(args, "|Ib:calibrate", &count, &end)) {
+    if (!PyArg_ParseTuple(args, "I|I:calibrate", &op, &count)) {
         return NULL;
     }
 
-    if (end) {
-        s2e_system_call(S2E_CHEF_CALIBRATE_END, NULL, count);
-    } else {
-        s2e_system_call(S2E_CHEF_CALIBRATE, NULL, count);
+    switch (op) {
+    case 0:
+        s2e_system_call(S2E_CHEF_CALIBRATE_START, NULL, 0);
+        break;
+    case 1:
+        s2e_system_call(S2E_CHEF_CALIBRATE_CHECKPOINT, NULL, count);
+        break;
+    case 2:
+        s2e_system_call(S2E_CHEF_CALIBRATE_END, NULL, 0);
+        break;
+    default:
+        PyErr_SetString(PyExc_ValueError, "Invalid calibration operation");
+        return NULL;
     }
 
     Py_RETURN_NONE;
