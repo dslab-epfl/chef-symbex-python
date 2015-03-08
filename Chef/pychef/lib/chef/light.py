@@ -96,7 +96,8 @@ class SymbolicTest(object):
             print "*log* %s" % message
             self._log_roll.append(message)
         else:
-            symbex.symcall(CHEF_S2E_PLUGIN, ChefSymCall.LOG_MESSAGE, message)
+            pass
+            #symbex.symcall(CHEF_S2E_PLUGIN, ChefSymCall.LOG_MESSAGE, message)
     
     def concretize(self, value):
         if self.replay:
@@ -157,7 +158,10 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
 
     with open("/proc/self/maps", "r") as f:
         data = f.read()
-        symbex.symcall(CHEF_S2E_PLUGIN, ChefSymCall.REPORT_PROCESS_MAP, data)
+        try:
+            symbex.symcall(CHEF_S2E_PLUGIN, ChefSymCall.REPORT_PROCESS_MAP, data)
+        except symbex.SymbexError:
+            logging.warning("Could not report the procmap. Skipping.")
 
     calibrate.perform_calibration()
 
