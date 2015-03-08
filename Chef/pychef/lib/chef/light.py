@@ -39,7 +39,7 @@ from chef import symbex
 from chef import calibrate
 
 
-CHEF_S2E_PLUGIN = "ConcolicSession"
+CHEF_S2E_PLUGIN = "InterpreterAnalyzer"
 
 
 class ChefSymCall(object):

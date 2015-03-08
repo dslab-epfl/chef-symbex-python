@@ -70,7 +70,7 @@ from distutils.core import setup, Extension
 #     def run(self):
 #         # Generate necessary .proto file if it doesn't exist.
 #         generate_proto("./lib/chef/chef_data.proto")
-# 
+#
 #         # _build_py is an old-style class, so super() doesn't work.
 #         _build_py.run(self)
 
