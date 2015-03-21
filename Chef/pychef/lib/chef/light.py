@@ -52,9 +52,10 @@ class ChefSymCall(object):
 class SymbolicTest(object):
     """Base class for symbolic tests"""
 
-    def __init__(self, replay=False, replay_assgn=None):
+    def __init__(self, replay=False, replay_assgn=None, sym_size=0):
         self.replay = replay
         self.replay_assgn = replay_assgn or {}
+        self.sym_size = sym_size
         self._log_roll = []
 
     @property
@@ -123,6 +124,9 @@ class SymbolicTest(object):
 def runFromArgs(symbolic_test, arg_list=None, **test_args):
     parser = argparse.ArgumentParser(description="Run or replay symbolic tests.")
 
+    parser.add_argument("--sym-size", "-s", type=int, default=0,
+                        help="Size of symbolic data")
+
     replay_mode = parser.add_mutually_exclusive_group()
     replay_mode.add_argument("-a", action="append", nargs=2, dest='assgn',
                              help="Symbolic value assignment")
@@ -147,13 +151,13 @@ def runFromArgs(symbolic_test, arg_list=None, **test_args):
 
         replayer.collect()
     else:
-        runSymbolic(symbolic_test, **test_args)
+        runSymbolic(symbolic_test, sym_size=args.sym_size, **test_args)
 
 
-def runSymbolic(symbolic_test, max_time=0,  **test_args):
+def runSymbolic(symbolic_test, sym_size=0, **test_args):
     """Runs a symbolic test in symbolic mode"""
 
-    test_inst = symbolic_test(**test_args)
+    test_inst = symbolic_test(sym_size=sym_size, **test_args)
     test_inst.setUp()
 
     with open("/proc/self/maps", "r") as f:
@@ -167,7 +171,7 @@ def runSymbolic(symbolic_test, max_time=0,  **test_args):
 
     concolic_session = False
     try:
-        symbex.startconcolic(max_time)
+        symbex.startconcolic()
         concolic_session = True
     except symbex.SymbexError:
         logging.warning("Cannot start the ConcolicSession. Proceeding without interpreter support.")
