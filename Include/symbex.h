@@ -5,8 +5,6 @@
 
 #ifdef SYMBEX_INSTRUMENTATION
 
-#include <pydebug.h>
-
 #include <s2e.h>
 
 
@@ -66,12 +64,6 @@
 #endif
 
 #define _SYMBEX_HASH_VALUE       0xABC
-
-// XXX: Clean this up
-#define _SYMBEX_OP_EBRANCH_POS   0
-#define _SYMBEX_OP_THROWS_POS    1
-#define _SYMBEX_OP_CALL_POS      2
-
 
 #else
 #define IS_SYMBOLIC_STR_SIZE(str, size) 0
