@@ -618,7 +618,7 @@ static inline void s2e_codeselector_enable_address_space(unsigned user_mode_only
 
 /** Disable forking in the specified process (represented by its page directory).
     If pagedir is 0, disable forking in the current process. */
-static inline void s2e_codeselector_disable_address_space(uint64_t pagedir)
+static inline void s2e_codeselector_disable_address_space(uintptr_t pagedir)
 {
     __asm__ __volatile__(
         S2E_INSTRUCTION_COMPLEX(AE, 01)
