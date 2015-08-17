@@ -27,10 +27,13 @@
 
 
 PYTHONCHEF := $(dir $(lastword $(MAKEFILE_LIST)))
+S2E_GUEST ?= $(HOME)/s2e-guest
+
 PYTHONSRC := $(PYTHONCHEF)/..
 PYTHONBIN_PREFIX := $(realpath .)/python-bin
 
-CHEF_INSTRUMENT := $(realpath $(PYTHONCHEF))/instrument/build/ChefInstrument/ChefInstrument.so
+
+CHEF_INSTRUMENT := $(S2E_GUEST)/chef/llvm-pass/build/bbtrace/libBasicBlockTracePass.so
 CFLAGS_INSTRUMENT := -Xclang -load -Xclang $(CHEF_INSTRUMENT)
 CFLAGS_ASAN := -fsanitize=address -mllvm -asan-instrument-reads=0 -mllvm -asan-instrument-writes=0
 CFLAGS_FP := -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
@@ -39,7 +42,7 @@ VIRTUALENV := virtualenv-1.10.1
 
 CC := clang
 CXX := clang++
-CFLAGS := -march=i586 $(CFLAGS_FP) $(CFLAGS_INSTRUMENT)
+CFLAGS := -march=i586 -I$(S2E_GUEST)/include $(CFLAGS_FP) $(CFLAGS_INSTRUMENT)
 # LDFLAGS := -fsanitize=address
 
 python_configure = mkdir -p $(1) && cd $(1) && \
