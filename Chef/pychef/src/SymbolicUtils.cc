@@ -21,7 +21,8 @@
  */
 
 #include "SymbolicUtils.h"
-#include "S2EGuest.h"
+
+#include "s2e.h"
 
 #include <Python.h>
 
@@ -31,8 +32,8 @@ namespace chef {
  * Obtain a concrete value for a possibly symbolic pointer value `p'.
  */
 void *SymbolicUtils::ConcretizePointer(const void *p) {
-  if (s2e_guest_->version()) {
-	  s2e_guest_->Concretize((void*)&p, sizeof(p));
+  if (s2e_version()) {
+	  s2e_concretize((void*)&p, sizeof(p));
 	  return (void *)p;
   } else {
 	  return (void *)p;
@@ -62,8 +63,8 @@ const char *SymbolicUtils::ConcretizeString(const char *s) {
       } */
     } else {
       char cc = c;
-      if (s2e_guest_->version()) {
-    	  s2e_guest_->GetExample(&cc, sizeof(cc));
+      if (s2e_version()) {
+    	  s2e_get_example(&cc, sizeof(cc));
       }
 
       // TODO: See if we need to force the concretization in the PC
@@ -89,8 +90,8 @@ PyObject *SymbolicUtils::MakeSymbolicString(unsigned int size,
 		return PyErr_NoMemory();
 	}
 
-	if (s2e_guest_->version()) {
-		s2e_guest_->MakeSymbolic((void*)sym_data, size + 1, name);
+	if (s2e_version()) {
+		s2e_make_symbolic((void*)sym_data, size + 1, name);
 	} else {
 		memset(sym_data, 'X', size);
 	}
@@ -109,8 +110,8 @@ PyObject *SymbolicUtils::MakeSymbolicString(unsigned int size,
  * message `message'.
  */
 void SymbolicUtils::KillState(int status, const char *message) {
-	if (s2e_guest_->version()) {
-		s2e_guest_->KillState(status, message);
+	if (s2e_version()) {
+		s2e_kill_state(status, message);
 	} else {
 		Py_Exit(status);
 	}

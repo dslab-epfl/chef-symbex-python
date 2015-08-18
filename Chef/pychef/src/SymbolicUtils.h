@@ -31,7 +31,7 @@ class S2EGuest;
 
 class SymbolicUtils {
 public:
-	SymbolicUtils(S2EGuest *s2e_guest) : s2e_guest_(s2e_guest) {}
+	SymbolicUtils() {}
 	virtual ~SymbolicUtils() {}
 
 	void *ConcretizePointer(const void *p);
@@ -39,8 +39,6 @@ public:
 
 	PyObject *MakeSymbolicString(unsigned int size, const char *name);
 	void KillState(int status, const char *message);
-private:
-	S2EGuest *s2e_guest_;
 };
 
 } /* namespace symbex */

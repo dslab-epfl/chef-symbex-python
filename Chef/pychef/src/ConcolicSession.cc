@@ -22,7 +22,7 @@
 
 #include "ConcolicSession.h"
 
-#include "S2EGuest.h"
+#include "s2e.h"
 
 #include <Python.h>
 #include <cassert>
@@ -142,7 +142,7 @@ PyObject *ConcolicSession::MakeConcolicInt(PyObject *target, const char *name,
 		long max_value, long min_value) {
 	assert(PyInt_Check(target));
 
-	if (!s2e_guest_->version()) {
+	if (!s2e_version()) {
 		PyErr_SetString(PyExc_RuntimeError, "Not in symbolic mode");
 		return NULL;
 	}
@@ -157,8 +157,8 @@ PyObject *ConcolicSession::MakeConcolicInt(PyObject *target, const char *name,
 
 	MakeConcolicBuffer(&value, sizeof(value), name, "value", 'i');
 	if (max_value >= min_value) {
-		s2e_guest_->Assume(value >= min_value);
-		s2e_guest_->Assume(value <= max_value);
+		s2e_assume(value >= min_value);
+		s2e_assume(value <= max_value);
 	}
 
 	return PyInt_FromLong(value);
@@ -167,7 +167,7 @@ PyObject *ConcolicSession::MakeConcolicInt(PyObject *target, const char *name,
 
 PyObject *ConcolicSession::MakeConcolicSequence(PyObject *target, const char *name,
 		int max_size, int min_size) {
-	if (!s2e_guest_->version()) {
+	if (!s2e_version()) {
 		PyErr_SetString(PyExc_RuntimeError, "Not in symbolic mode");
 		return NULL;
 	}
@@ -213,7 +213,7 @@ void ConcolicSession::MakeConcolicBuffer(void *buf, int size,
 	static char obj_name[256];
 	snprintf(obj_name, 256, "%s.%c#%s", base_name, type, name);
 
-	s2e_guest_->MakeConcolic(buf, size, obj_name);
+	s2e_make_concolic(buf, size, obj_name);
 }
 
 int ConcolicSession::CheckObjectSize(Py_ssize_t size, int max_size,
@@ -234,9 +234,9 @@ void ConcolicSession::ConstrainObjectSize(Py_ssize_t size, int max_size,
 	assert(min_size >= 0);
 
 	if (max_size > 0) {
-		s2e_guest_->Assume(size <= max_size);
+		s2e_assume(size <= max_size);
 	}
-	s2e_guest_->Assume(size >= min_size);
+	s2e_assume(size >= min_size);
 }
 
 
@@ -342,8 +342,8 @@ PyObject *ConcolicSession::MakeConcolicDict(PyObject *target,
 	PyDictObject *dict_target = (PyDictObject*)target;
 	MakeConcolicBuffer(&dict_target->ma_used, sizeof(dict_target->ma_used),
 			name, "size", 'l');
-	s2e_guest_->Assume(dict_target->ma_used >= 0);
-	s2e_guest_->Assume(dict_target->ma_used < max_symbolic_size_);
+	s2e_assume(dict_target->ma_used >= 0);
+	s2e_assume(dict_target->ma_used < max_symbolic_size_);
 
 	Py_INCREF(target);
 	return target;
@@ -357,8 +357,8 @@ PyObject *ConcolicSession::MakeConcolicTuple(PyObject *target,
 	PyTupleObject *tup_target = (PyTupleObject*)target;
 	MakeConcolicBuffer(&tup_target->ob_size, sizeof(tup_target->ob_size),
 			name, "size", 'l');
-	s2e_guest_->Assume(tup_target->ob_size >= 0);
-	s2e_guest_->Assume(tup_target->ob_size < max_symbolic_size_);
+	s2e_assume(tup_target->ob_size >= 0);
+	s2e_assume(tup_target->ob_size < max_symbolic_size_);
 
 	Py_INCREF(target);
 	return target;

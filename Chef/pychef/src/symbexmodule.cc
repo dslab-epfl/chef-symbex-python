@@ -24,10 +24,9 @@
 #include <frameobject.h>
 
 #include "ConcolicSession.h"
-#include "S2EGuest.h"
 #include "SymbolicUtils.h"
 
-#include "s2e/chef.h"
+#include "s2e.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -39,14 +38,6 @@ using namespace chef;
 
 #define DEFAULT_MIN_INT_VALUE   (-128)
 #define DEFAULT_MAX_INT_VALUE     127
-
-#define S2E_CONCOLIC_PLUGIN        "ConcolicSession"
-
-typedef enum {
-    START_CONCOLIC_SESSION,
-    END_CONCOLIC_SESSION,
-    LOG_MESSAGE
-} ConcolicCommand;
 
 
 enum {
@@ -60,7 +51,6 @@ enum {
 
 static PyObject *SymbexError;
 
-static S2EGuest *s2e_guest;
 static ConcolicSession *concolic_session;
 static SymbolicUtils *symbolic_utils;
 
@@ -193,7 +183,7 @@ symbex_concrete(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	if (!s2e_guest->version()) {
+	if (!s2e_version()) {
 		Py_INCREF(target);
 		return target;
 	}
@@ -201,7 +191,7 @@ symbex_concrete(PyObject *self, PyObject *args) {
 	if (PyInt_Check(target)) {
 		PyIntObject *int_target = (PyIntObject*)target;
 		long value = int_target->ob_ival;
-		s2e_guest->GetExample(&value, sizeof(value));
+		s2e_get_example(&value, sizeof(value));
 
 		return PyInt_FromLong(value);
 	} else {
@@ -233,99 +223,6 @@ symbex_killstate(PyObject *self, PyObject *args) {
 
 /*----------------------------------------------------------------------------*/
 
-PyDoc_STRVAR(symbex_startconcolic_doc,
-"startconcolic([max_time, end_at_exit]) \n\
-\n\
-Mark the start of a concolic session.");
-
-static void startconcolic_atexit() {
-    s2e_guest->SystemCall(S2E_CONCOLIC_PLUGIN, END_CONCOLIC_SESSION, NULL, 0);
-}
-
-static PyObject *
-symbex_startconcolic(PyObject *self, PyObject *args) {
-	uint32_t max_time = 0;
-	unsigned char end_at_exit = 1;
-	if (!PyArg_ParseTuple(args, "|Ib:startconcolic", &max_time, &end_at_exit)) {
-		return NULL;
-	}
-
-	if (s2e_guest->SystemCall(S2E_CONCOLIC_PLUGIN, START_CONCOLIC_SESSION,
-	        NULL, 0) != 0) {
-		PyErr_SetString(SymbexError, "Could not start concolic session");
-		return NULL;
-	}
-
-	// Register a state killing function at program exit
-	if (end_at_exit && Py_AtExit(&startconcolic_atexit) == -1) {
-		PyErr_SetString(SymbexError, "Could not register exit function");
-		return NULL;
-	}
-
-	PyThreadState *tstate = PyThreadState_Get();
-	trace_init(tstate->frame);
-	PyEval_SetTrace(&trace_func, NULL);
-
-	Py_RETURN_NONE;
-}
-
-/*----------------------------------------------------------------------------*/
-
-PyDoc_STRVAR(symbex_endconcolic_doc,
-"endconcolic(is_error_path) \n\
-\n\
-Terminate the concolic session.");
-
-static PyObject *
-symbex_endconcolic(PyObject *self, PyObject *args) {
-	unsigned char is_error_path;
-	if (!PyArg_ParseTuple(args, "b:endconcolic", &is_error_path)) {
-		return NULL;
-	}
-
-	if (s2e_guest->SystemCall(S2E_CONCOLIC_PLUGIN, END_CONCOLIC_SESSION,
-	        NULL, 0) != 0) {
-		PyErr_SetString(SymbexError, "Could not terminate concolic session");
-		return NULL;
-	}
-
-	PyEval_SetTrace(NULL, NULL);
-
-	Py_RETURN_NONE;
-}
-
-/*----------------------------------------------------------------------------*/
-#if 0
-PyDoc_STRVAR(symbex_snapshotrun_doc,
-"snapshotrun(func) -> a tuple\n\
-\n\
-Execute the given function in a machine snapshot. The current machine state\n\
-is forked, and the function executes inside the fork. No effect of \n\
-the function execution is visible in the original context.");
-
-
-static PyObject *
-symbex_snapshotrun(PyObject *self, PyObject *args) {
-	PyObject *callable = NULL, *result = NULL;
-	unsigned char stop_on_error = 1;
-	uint32_t max_time = 0;
-	unsigned char use_random_select = 0;
-	unsigned char debug = 0;
-
-	if (!PyArg_ParseTuple(args, "O|bIbb:snapshotrun", &callable,
-			&stop_on_error, &max_time, &use_random_select, &debug)) {
-		return NULL;
-	}
-
-	result = concolic_session->RunConcolic(callable, stop_on_error,
-			max_time, use_random_select, debug);
-
-	return result;
-}
-#endif
-
-/*----------------------------------------------------------------------------*/
-
 PyDoc_STRVAR(symbex_assume_doc,
 "assume(cond) \n\
 \n\
@@ -340,7 +237,7 @@ symbex_assume(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	s2e_guest->Assume(condition);
+	s2e_assume(condition);
 
 	Py_RETURN_NONE;
 }
@@ -362,7 +259,7 @@ symbex_assumeascii(PyObject *self, PyObject *args) {
 	}
 
 	for (i = 0; i < Py_SIZE(string_obj); ++i) {
-		s2e_guest->Assume(((unsigned char)string_obj->ob_sval[i]) < 0x80);
+		s2e_assume(((unsigned char)string_obj->ob_sval[i]) < 0x80);
 	}
 
 	Py_RETURN_NONE;
@@ -387,7 +284,7 @@ symbex_symcall(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    if (s2e_guest->SystemCall(plugin, id, (void*)data, data_size) != 0) {
+    if (s2e_plugin_call(plugin, id, (void*)data, data_size) != 0) {
         PyErr_SetString(SymbexError, "Could not invoke syscall");
         return NULL;
     }
@@ -438,20 +335,11 @@ PyDoc_STRVAR(module_doc,
 static PyMethodDef SymbexMethods[] = {
 	{ "symsequence", symbex_symsequence, METH_VARARGS, symbex_symsequence_doc },
 	{ "symint", symbex_symint, METH_VARARGS, symbex_symint_doc },
-
 	{ "symtoconcrete", symbex_symtoconcrete, METH_VARARGS,
 			symbex_symtoconcrete_doc },
 	{ "concrete", symbex_concrete, METH_VARARGS, symbex_concrete_doc },
-
 	{ "killstate", symbex_killstate, METH_VARARGS, symbex_killstate_doc },
-
-	{ "startconcolic", symbex_startconcolic, METH_VARARGS, symbex_startconcolic_doc },
-	{ "endconcolic", symbex_endconcolic, METH_VARARGS, symbex_endconcolic_doc },
 	{ "symcall", symbex_symcall, METH_VARARGS, symbex_symcall_doc },
-#if 0
-	{ "snapshotrun", symbex_snapshotrun, METH_VARARGS, symbex_snapshotrun_doc },
-#endif
-
 	{ "assume", symbex_assume, METH_VARARGS, symbex_assume_doc },
 	{ "assumeascii", symbex_assumeascii, METH_VARARGS, symbex_assumeascii_doc },
 	{ "calibrate", symbex_calibrate, METH_VARARGS, symbex_calibrate_doc },
@@ -467,11 +355,8 @@ initsymbex(void) {
 	if (m == NULL)
 	  return;
 
-	if (s2e_guest == NULL) {
-		s2e_guest = new S2EGuest();
-		concolic_session = new ConcolicSession(s2e_guest);
-		symbolic_utils = new SymbolicUtils(s2e_guest);
-	}
+	concolic_session = new ConcolicSession();
+	symbolic_utils = new SymbolicUtils();
 
 	if (SymbexError == NULL) {
 		SymbexError = PyErr_NewException((char*)"symbex.SymbexError", NULL, NULL);

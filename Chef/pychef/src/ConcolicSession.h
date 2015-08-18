@@ -29,13 +29,10 @@
 
 namespace chef {
 
-class S2EGuest;
-
 class ConcolicSession {
 public:
-	ConcolicSession(S2EGuest *s2e_guest)
-		: s2e_guest_(s2e_guest),
-		  max_symbolic_size_(64) {
+	ConcolicSession()
+		: max_symbolic_size_(64) {
 
 	}
 
@@ -57,7 +54,6 @@ public:
 #endif
 
 private:
-	S2EGuest *s2e_guest_;
 	int max_symbolic_size_;
 
 	void MakeConcolicBuffer(void *buf, int size, const char *base_name,
