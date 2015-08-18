@@ -1,0 +1,5 @@
+build/
+*.so
+*_pb2.py
+*.egg-info
+*.ll

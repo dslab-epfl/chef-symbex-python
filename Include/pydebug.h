@@ -28,10 +28,6 @@ PyAPI_DATA(int) _Py_QnewFlag;
 PyAPI_DATA(int) Py_Py3kWarningFlag;
 PyAPI_DATA(int) Py_HashRandomizationFlag;
 
-#ifdef SYMBEX_INSTRUMENTATION
-PyAPI_DATA(int) Py_EnableS2EFlag;
-#endif
-
 /* this is a wrapper around getenv() that pays attention to
    Py_IgnoreEnvironmentFlag.  It should be used for getting variables like
    PYTHONPATH and PYTHONHOME from the environment */

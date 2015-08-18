@@ -10,7 +10,6 @@
 #define PY_LOCAL_AGGRESSIVE
 
 #include "Python.h"
-#include "symbex.h"
 
 #include "code.h"
 #include "frameobject.h"
@@ -149,20 +148,6 @@ static PyObject * string_concatenate(PyObject *, PyObject *,
                                      PyFrameObject *, unsigned char *);
 static PyObject * kwd_as_string(PyObject *);
 static PyObject * special_lookup(PyObject *, char *, PyObject **);
-
-#ifdef _SYMBEX_INSTRUMENT
-
-#define _SYMBEX_TRACE_SIZE	2
-
-typedef struct {
-	uint32_t op_code;
-	uint32_t frame_count;
-	uint32_t frames[_SYMBEX_TRACE_SIZE];
-} __attribute__((packed)) TraceUpdate;
-
-static TraceUpdate trace_update;
-static int report_trace(PyFrameObject *frame, uint32_t op_code);
-#endif /* _SYMBEX_INSTRUMENT */
 
 #define NAME_ERROR_MSG \
     "name '%.200s' is not defined"
@@ -1084,7 +1069,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
             it doesn't have to be remembered across a full loop */
         if (HAS_ARG(opcode))
             oparg = NEXTARG();
-
     dispatch_opcode:
 #ifdef DYNAMIC_EXECUTION_PROFILE
 #ifdef DXPAIRS
@@ -1108,12 +1092,6 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
             }
         }
 #endif
-
-#ifdef _SYMBEX_INSTRUMENT
-        if (Py_EnableS2EFlag) {
-        	report_trace(f, opcode);
-        }
-#endif /* _SYMBEX_INSTRUMENT */
 
         /* Main switch on opcode */
         READ_TIMESTAMP(inst0);
@@ -3322,23 +3300,6 @@ kwd_as_string(PyObject *kwd) {
     return _PyUnicode_AsDefaultEncodedString(kwd, "replace");
 #endif
 }
-
-#ifdef _SYMBEX_INSTRUMENT
-static int report_trace(PyFrameObject *frame, uint32_t op_code) {
-	trace_update.op_code = op_code;
-
-	trace_update.frame_count = _SYMBEX_TRACE_SIZE;
-	trace_update.frames[0] = (uint32_t)frame->f_lasti;
-	trace_update.frames[1] = (uintptr_t)frame;
-
-	if (s2e_invoke_plugin("InterpreterMonitor", (void*)&trace_update,
-			sizeof(TraceUpdate)) != 0) {
-		return -1;
-	}
-
-	return 0;
-}
-#endif
 
 
 /* Implementation notes for set_exc_info() and reset_exc_info():

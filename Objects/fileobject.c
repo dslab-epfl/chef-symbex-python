@@ -2,6 +2,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
+#include "symbex.h"
 #include "structmember.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -1737,6 +1738,9 @@ file_write(PyFileObject *f, PyObject *args)
 {
     Py_buffer pbuf;
     const char *s;
+#ifdef SYMBEX_INSTRUMENTATION
+    char *cs;
+#endif
     Py_ssize_t n, n2;
     PyObject *encoded = NULL;
 
@@ -1779,10 +1783,23 @@ file_write(PyFileObject *f, PyObject *args)
         }
     }
     f->f_softspace = 0;
+#ifdef SYMBEX_INSTRUMENTATION
+    s2e_get_example((void*)&n, sizeof(n));
+    cs = PyMem_Malloc(n);
+    memcpy(cs, s, n);
+    s2e_get_example((void*)cs, n);
+#endif
     FILE_BEGIN_ALLOW_THREADS(f)
     errno = 0;
+#ifdef SYMBEX_INSTRUMENTATION
+    n2 = fwrite(cs, 1, n, f->f_fp);
+#else
     n2 = fwrite(s, 1, n, f->f_fp);
+#endif
     FILE_END_ALLOW_THREADS(f)
+#ifdef SYMBEX_INSTRUMENTATION
+    PyMem_Free(cs);
+#endif
     Py_XDECREF(encoded);
     if (f->f_binary)
         PyBuffer_Release(&pbuf);

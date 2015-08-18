@@ -5536,6 +5536,13 @@ then
 	OPT="-O"
 	;;
     esac
+    case "$enable_symbex" in
+    yes)
+      OPT="$OPT -DDYNAMIC_EXECUTION_PROFILE"
+      ;;
+    *)
+      ;;
+    esac
 fi
 
 
