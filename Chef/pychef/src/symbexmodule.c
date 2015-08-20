@@ -23,15 +23,11 @@
 #include <Python.h>
 #include <frameobject.h>
 
-#include "ConcolicSession.h"
-#include "SymbolicUtils.h"
-
+#include "symbexutils.h"
 #include "s2e.h"
 
 #include <stdint.h>
 #include <stdlib.h>
-
-using namespace chef;
 
 #define DEFAULT_MIN_SEQ_SIZE        0
 #define DEFAULT_MAX_SEQ_SIZE     (-1)
@@ -51,9 +47,6 @@ enum {
 
 static PyObject *SymbexError;
 
-static ConcolicSession *concolic_session;
-static SymbolicUtils *symbolic_utils;
-
 
 /*== Trace handler ===========================================================*/
 
@@ -72,16 +65,22 @@ static int trace_func(PyObject *obj, PyFrameObject *frame, int what,
         chef_frame.file_name = (uintptr_t)PyString_AS_STRING(frame->f_code->co_filename);
     }
 
-    __chef_hl_trace(static_cast<hl_trace_reason>(what), &chef_frame, 1);
+    __chef_hl_trace((hl_trace_reason)(what), &chef_frame, 1);
     return 0;
 }
 
 
-static void trace_init(PyFrameObject *frame) {
+static int count_frames(PyFrameObject *head) {
     int frame_count = 0;
-    for (PyFrameObject *f = frame; f != NULL; f = f->f_back, ++frame_count);
+    for (; head != NULL; head = head->f_back, ++frame_count);
+    return frame_count;
+}
 
-    hl_frame_t *call_stack = new hl_frame_t[frame_count];
+
+static void trace_init(PyFrameObject *frame) {
+    int frame_count = count_frames(frame);
+
+    hl_frame_t *call_stack = (hl_frame_t*)PyMem_Malloc(frame_count*sizeof(hl_frame_t));
     hl_frame_t *chef_frame = call_stack;
 
     while (frame != NULL) {
@@ -98,7 +97,7 @@ static void trace_init(PyFrameObject *frame) {
 
     __chef_hl_trace(CHEF_TRACE_INIT, call_stack, frame_count);
 
-    delete [] call_stack;
+    PyMem_Free(call_stack);
 }
 
 
@@ -122,8 +121,7 @@ symbex_symsequence(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	return concolic_session->MakeConcolicSequence(target, name, max_size,
-			min_size);
+	return makeConcolicSequence(target, name, max_size, min_size);
 }
 
 
@@ -146,8 +144,7 @@ symbex_symint(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	return concolic_session->MakeConcolicInt(target, name, max_value,
-			min_value);
+	return makeConcolicInt(target, name, max_value, min_value);
 }
 
 
@@ -164,7 +161,7 @@ symbex_symtoconcrete(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s:symtoconcrete", &string))
     return NULL;
 
-  return PyString_FromString(symbolic_utils->ConcretizeString(string));
+  return PyString_FromString(concretizeString(string));
 }
 
 
@@ -216,7 +213,7 @@ symbex_killstate(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "is:killstate", &status, &message))
     return NULL;
 
-  symbolic_utils->KillState(status, message);
+  killState(status, message);
 
   Py_RETURN_NONE;
 }
@@ -354,9 +351,6 @@ initsymbex(void) {
 	m = Py_InitModule3("symbex", SymbexMethods, module_doc);
 	if (m == NULL)
 	  return;
-
-	concolic_session = new ConcolicSession();
-	symbolic_utils = new SymbolicUtils();
 
 	if (SymbexError == NULL) {
 		SymbexError = PyErr_NewException((char*)"symbex.SymbexError", NULL, NULL);

@@ -50,9 +50,8 @@ setup(name="ChefSymTest",
       ext_package='chef',
       ext_modules=[
           Extension('symbex',
-                    sources=['src/symbexmodule.cc',
-                             'src/ConcolicSession.cc',
-                             'src/SymbolicUtils.cc'],
+                    sources=['src/symbexmodule.c',
+                             'src/symbexutils.c'],
                     include_dirs=[os.path.join(os.environ["S2E_GUEST"], 'include')])
       ],
       )
