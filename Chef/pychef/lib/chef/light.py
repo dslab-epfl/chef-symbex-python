@@ -169,23 +169,13 @@ def runSymbolic(symbolic_test, sym_size=0, **test_args):
 
     calibrate.perform_calibration()
 
-    concolic_session = False
-    try:
-        symbex.startconcolic()
-        concolic_session = True
-    except symbex.SymbexError:
-        logging.warning("Cannot start the ConcolicSession. Proceeding without interpreter support.")
-
     try:
         test_inst.runTest()
     except:
         test_inst.printException()
         raise
     finally:
-        if concolic_session:
-            symbex.endconcolic(False)
-        else:
-            symbex.killstate(0, "Symbolic test ended")
+        symbex.killstate(0, "Symbolic test ended")
 
 
 # def _read_proto_messages(f):
