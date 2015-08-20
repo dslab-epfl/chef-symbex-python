@@ -32,38 +32,38 @@
 /*
  * Obtain a concrete value for a possibly symbolic pointer value `p'.
  */
-void *concretizePointer(const void *p);
+void *Sym_ConcretizePtr(const void *p);
 
 /*
  * Obtain a concrete string out of a possibly symbolic string `s'.
  */
-const char *concretizeString(const char *s);
+const char *Sym_ConcretizeString(const char *s);
 
 /*
  * Construct an unconstrained symbolic Python string object of size `size'
  * and symbolic name `name'.
  */
-PyObject *makeSymbolicString(unsigned int size, const char *name);
+PyObject *Sym_MakeSymbolicString(unsigned int size, const char *name);
 
 /*
  * Terminate the current execution state with status code `status' and
  * message `message'.
  */
-void killState(int status, const char *message);
+void Sym_KillState(int status, const char *message);
 
-PyObject *makeConcolicInt(PyObject *target, const char *name,
+PyObject *Sym_MakeConcolicInt(PyObject *target, const char *name,
         long max_value, long min_value);
-PyObject *makeConcolicSequence(PyObject *target, const char *name,
+PyObject *Sym_MakeConcolicSequence(PyObject *target, const char *name,
         int max_size, int min_size);
-PyObject *makeConcolicString(PyObject *target,
+PyObject *Sym_MakeConcolicString(PyObject *target,
         const char *name, int max_size, int min_size);
-PyObject *makeConcolicUnicode(PyObject *target,
+PyObject *Sym_MakeConcolicUnicode(PyObject *target,
         const char *name, int max_size, int min_size);
-PyObject *makeConcolicList(PyObject *target,
+PyObject *Sym_MakeConcolicList(PyObject *target,
         const char *name, int max_size, int min_size);
-PyObject *makeConcolicDict(PyObject *target,
+PyObject *Sym_MakeConcolicDict(PyObject *target,
         const char *name);
-PyObject *makeConcolicTuple(PyObject *target,
+PyObject *Sym_MakeConcolicTuple(PyObject *target,
         const char *name);
 
 

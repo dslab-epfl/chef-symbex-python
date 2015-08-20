@@ -68,7 +68,7 @@ static void constrainObjectSize(Py_ssize_t size, int max_size,
 }
 
 
-void *concretizePointer(const void *p) {
+void *Sym_ConcretizePtr(const void *p) {
   if (s2e_version()) {
       s2e_concretize((void*)&p, sizeof(p));
       return (void *)p;
@@ -78,8 +78,8 @@ void *concretizePointer(const void *p) {
 }
 
 
-const char *concretizeString(const char *s) {
-  char *sc = (char*)concretizePointer(s);
+const char *Sym_ConcretizeString(const char *s) {
+  char *sc = (char*)Sym_ConcretizePtr(s);
   unsigned i;
 
   for (i = 0; ; ++i) {
@@ -112,7 +112,7 @@ const char *concretizeString(const char *s) {
 }
 
 
-PyObject *makeSymbolicString(unsigned int size, const char *name) {
+PyObject *Sym_MakeSymbolicString(unsigned int size, const char *name) {
     char *sym_data = (char *)PyMem_Malloc(size + 1);
 
     if (!sym_data) {
@@ -134,7 +134,7 @@ PyObject *makeSymbolicString(unsigned int size, const char *name) {
 }
 
 
-void killState(int status, const char *message) {
+void Sym_KillState(int status, const char *message) {
     if (s2e_version()) {
         s2e_kill_state(status, message);
     } else {
@@ -143,7 +143,7 @@ void killState(int status, const char *message) {
 }
 
 
-PyObject *makeConcolicInt(PyObject *target, const char *name,
+PyObject *Sym_MakeConcolicInt(PyObject *target, const char *name,
         long max_value, long min_value) {
     assert(PyInt_Check(target));
 
@@ -170,7 +170,7 @@ PyObject *makeConcolicInt(PyObject *target, const char *name,
 }
 
 
-PyObject *makeConcolicSequence(PyObject *target, const char *name,
+PyObject *Sym_MakeConcolicSequence(PyObject *target, const char *name,
         int max_size, int min_size) {
     if (!s2e_version()) {
         PyErr_SetString(PyExc_RuntimeError, "Not in symbolic mode");
@@ -186,15 +186,15 @@ PyObject *makeConcolicSequence(PyObject *target, const char *name,
         PyErr_SetString(PyExc_ValueError, "Cannot make symbolic None");
         return NULL;
     } else if (PyString_Check(target)) {
-        return makeConcolicString(target, name, max_size, min_size);
+        return Sym_MakeConcolicString(target, name, max_size, min_size);
     } else if (PyUnicode_Check(target)) {
-        return makeConcolicUnicode(target, name, max_size, min_size);
+        return Sym_MakeConcolicUnicode(target, name, max_size, min_size);
     } else if (PyList_Check(target)) {
-        return makeConcolicList(target, name, max_size, min_size);
+        return Sym_MakeConcolicList(target, name, max_size, min_size);
     } else if (PyDict_Check(target)) {
-        return makeConcolicDict(target, name);
+        return Sym_MakeConcolicDict(target, name);
     } else if (PyTuple_Check(target)) {
-        return makeConcolicTuple(target, name);
+        return Sym_MakeConcolicTuple(target, name);
     } else {
         PyErr_SetString(PyExc_TypeError, "Unsupported type");
         return NULL;
@@ -202,7 +202,7 @@ PyObject *makeConcolicSequence(PyObject *target, const char *name,
 }
 
 
-PyObject *makeConcolicString(PyObject *target,
+PyObject *Sym_MakeConcolicString(PyObject *target,
         const char *name, int max_size, int min_size) {
     assert(PyString_Check(target));
 
@@ -238,7 +238,7 @@ PyObject *makeConcolicString(PyObject *target,
 }
 
 
-PyObject *makeConcolicUnicode(PyObject *target,
+PyObject *Sym_MakeConcolicUnicode(PyObject *target,
         const char *name, int max_size, int min_size) {
     assert(PyUnicode_Check(target));
 
@@ -276,7 +276,7 @@ PyObject *makeConcolicUnicode(PyObject *target,
 }
 
 
-PyObject *makeConcolicList(PyObject *target,
+PyObject *Sym_MakeConcolicList(PyObject *target,
         const char *name, int max_size, int min_size) {
     assert(PyList_Check(target));
 
@@ -297,7 +297,7 @@ PyObject *makeConcolicList(PyObject *target,
 }
 
 
-PyObject *makeConcolicDict(PyObject *target,
+PyObject *Sym_MakeConcolicDict(PyObject *target,
         const char *name) {
     assert(PyDict_Check(target));
 
@@ -312,7 +312,7 @@ PyObject *makeConcolicDict(PyObject *target,
 }
 
 
-PyObject *makeConcolicTuple(PyObject *target,
+PyObject *Sym_MakeConcolicTuple(PyObject *target,
         const char *name) {
     assert(PyTuple_Check(target));
 

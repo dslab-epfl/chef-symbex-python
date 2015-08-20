@@ -121,7 +121,7 @@ symbex_symsequence(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	return makeConcolicSequence(target, name, max_size, min_size);
+	return Sym_MakeConcolicSequence(target, name, max_size, min_size);
 }
 
 
@@ -144,7 +144,7 @@ symbex_symint(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
-	return makeConcolicInt(target, name, max_value, min_value);
+	return Sym_MakeConcolicInt(target, name, max_value, min_value);
 }
 
 
@@ -161,7 +161,7 @@ symbex_symtoconcrete(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "s:symtoconcrete", &string))
     return NULL;
 
-  return PyString_FromString(concretizeString(string));
+  return PyString_FromString(Sym_ConcretizeString(string));
 }
 
 
@@ -213,7 +213,7 @@ symbex_killstate(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "is:killstate", &status, &message))
     return NULL;
 
-  killState(status, message);
+  Sym_KillState(status, message);
 
   Py_RETURN_NONE;
 }
